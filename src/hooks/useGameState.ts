@@ -35,7 +35,7 @@ export const useGameState = () => {
 
   // Queue system for floating texts
   const [textQueue, setTextQueue] = useState<FloatingTextItem[]>([]);
-  const [activeText, setActiveText] = useState<FloatingTextItem | null>(null);
+  const [activeTexts, setActiveTexts] = useState<FloatingTextItem[]>([]);
   const nextFloatingTextId = useRef(0);
 
   // Screen shake state
@@ -56,6 +56,7 @@ export const useGameState = () => {
   };
 
   const triggerFloatingText = useCallback((text: string, _x: number, _y: number, color?: string, onCompleteCallback?: () => void) => {
+    // Always use window center as requested
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
@@ -73,20 +74,25 @@ export const useGameState = () => {
 
   // Process text queue
   useEffect(() => {
-    if (!activeText && textQueue.length > 0) {
-      const next = textQueue[0];
-      setActiveText(next);
-      setTextQueue(prev => prev.slice(1));
+    if (textQueue.length > 0) {
+      const delay = activeTexts.length === 0 ? 0 : 300; // Immediate if empty, else stagger
+      
+      const timer = setTimeout(() => {
+        const next = textQueue[0];
+        setActiveTexts(prev => [...prev, next]);
+        setTextQueue(prev => prev.slice(1));
+      }, delay);
+      
+      return () => clearTimeout(timer);
     }
-  }, [activeText, textQueue]);
+  }, [textQueue, activeTexts.length]);
 
   const handleFloatingTextComplete = (id: number) => {
-    if (activeText?.id === id) {
-      if (activeText.onCompleteCallback) {
-        activeText.onCompleteCallback();
-      }
-      setActiveText(null);
+    const text = activeTexts.find(t => t.id === id);
+    if (text?.onCompleteCallback) {
+        text.onCompleteCallback();
     }
+    setActiveTexts(prev => prev.filter(t => t.id !== id));
   };
 
   const resetGame = () => {
@@ -110,7 +116,7 @@ export const useGameState = () => {
     setParticleEvents([]);
     setGoldPiece(null);
     setTextQueue([]);
-    setActiveText(null);
+    setActiveTexts([]);
     setIsShaking(false);
   };
 
@@ -136,8 +142,7 @@ export const useGameState = () => {
     isEnemyThinking, setIsEnemyThinking,
     goldPiece, setGoldPiece,
     particleEvents, triggerParticles,
-    // Map activeText to array for compatibility with Game.tsx rendering map
-    floatingTexts: activeText ? [activeText] : [],
+    floatingTexts: activeTexts,
     triggerFloatingText, 
     handleFloatingTextComplete,
     resetGame,

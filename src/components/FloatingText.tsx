@@ -19,6 +19,8 @@ const FloatingText: React.FC<FloatingTextProps> = ({ id, text, x, y, color = '#f
     fontWeight: '900',
     pointerEvents: 'none',
     zIndex: 10001,
+    whiteSpace: 'nowrap', // Prevent wrapping
+    textAlign: 'center',
     // Thick outline using multiple text-shadows for high visibility
     textShadow: `
       3px 3px 0 #000,

@@ -5,8 +5,6 @@ import HPBar from './HPBar';
 import EXPBar from './EXPBar';
 import StatusDisplay from './StatusDisplay';
 import UpgradeModal from './UpgradeModal';
-import SettingsModal from './SettingsModal';
-import HowToPlayOverlay from './HowToPlayOverlay';
 import GameOverModal from './GameOverModal';
 import ParticleSystem from './ParticleSystem';
 import FloatingText from './FloatingText';
@@ -14,13 +12,16 @@ import { useGameState } from '../hooks/useGameState';
 import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent, findBestMove } from '../utils/gameLogic';
 import { Upgrade } from '../types';
 
-const Game: React.FC = () => {
+interface GameProps {
+  onBackToLevels: () => void;
+}
+
+const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
   const {
     board, setBoard,
     playerHP, setPlayerHP,
     enemyHP, setEnemyHP,
     maxPlayerHP, setMaxPlayerHP,
-    // maxEnemyHP, setMaxEnemyHP, // Available but not currently used in UI directly
     nextTurnDamageBonus, setNextTurnDamageBonus,
     nextTurnDamageReduction, setNextTurnDamageReduction,
     currentPlayer, setCurrentPlayer,
@@ -42,10 +43,8 @@ const Game: React.FC = () => {
     isShaking, triggerShake
   } = useGameState();
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   
   const expBarRef = useRef<HTMLDivElement>(null);
 
@@ -57,18 +56,25 @@ const Game: React.FC = () => {
   const blockEXP = 33;
   const lineCompletionBonusTurns = 1;
 
-  // Handler for Game Over Logic - now triggered via callbacks
+  // Handler for Game Over Logic
   const triggerGameOver = useCallback((winnerName: string) => {
     setGameOver(true);
     setWinner(winnerName);
     setStatusMessage(winnerName === 'Player' ? 'Victory! Enemy defeated!' : 'Defeat! You have fallen in battle!');
+    
+    if (winnerName === 'Player') {
+        confetti({
+            particleCount: 200,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FFD700', '#FFA500', '#FF4500', '#00FF00', '#00BFFF']
+        });
+    }
   }, [setGameOver, setWinner, setStatusMessage]);
 
   const handleDraw = useCallback(() => {
-    // Only queue draw sequence if game isn't already over
     if (gameOver) return;
 
-    // Apply draw damage and shake
     const newPlayerHP = Math.max(0, playerHP - drawDamage);
     const newEnemyHP = Math.max(0, enemyHP - drawDamage);
     
@@ -76,9 +82,10 @@ const Game: React.FC = () => {
     setEnemyHP(newEnemyHP);
     triggerShake();
 
-    // Check if draw damage killed anyone
     const isPlayerDead = newPlayerHP <= 0;
     const isEnemyDead = newEnemyHP <= 0;
+
+    setIsClearing(true); // Start shrinking immediately when draw happens
 
     triggerFloatingText(
       `DRAW! -${drawDamage}`, 
@@ -86,13 +93,10 @@ const Game: React.FC = () => {
       0, 
       '#ff4444', 
       () => {
-        // This runs AFTER the text finishes
-        
         if (isPlayerDead || isEnemyDead) {
-            // If draw damage killed someone, trigger game over instead of reset
+            setIsClearing(false); // Stop clearing if game over
             if (isPlayerDead && isEnemyDead) {
-                // If both die, currently defaulting to Enemy win (Player loss) or could be Draw
-                triggerGameOver('Enemy'); // Or handle true double KO
+                triggerGameOver('Enemy');
                 triggerFloatingText('DEFEAT!', 0, 0, '#ff4444');
             } else if (isPlayerDead) {
                 triggerGameOver('Enemy');
@@ -102,17 +106,18 @@ const Game: React.FC = () => {
                 triggerFloatingText('VICTORY!', 0, 0, '#00ff66');
             }
         } else {
-            // Normal reset
-            setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
-            setCurrentPlayer('X');
-            setConsecutiveTurns(0);
-            setStatusMessage(`Draw! Both players take ${drawDamage} damage. Board reset.`);
-            setLastWinningLines([]);
-            setComboCount(0);
-            
-            // Reset turn-based modifiers on draw board reset
-            setNextTurnDamageBonus(0);
-            setNextTurnDamageReduction(0);
+            setTimeout(() => {
+                setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
+                setIsClearing(false);
+                setCurrentPlayer('X');
+                setConsecutiveTurns(0);
+                setStatusMessage(`Draw! Both players take ${drawDamage} damage. Board reset.`);
+                setLastWinningLines([]);
+                setComboCount(0);
+                
+                setNextTurnDamageBonus(0);
+                setNextTurnDamageReduction(0);
+            }, 500);
         }
       }
     );
@@ -120,7 +125,6 @@ const Game: React.FC = () => {
 
   const generateUpgrades = useCallback((): Upgrade[] => {
     const allUpgrades: Upgrade[] = [
-      // Healing Upgrades
       {
         id: 'heal_small',
         name: 'Potion',
@@ -143,8 +147,6 @@ const Game: React.FC = () => {
           triggerFloatingText('MAX HP UP!', 0, 0, '#00ff66');
         }
       },
-      
-      // Tactical Upgrades
       {
         id: 'double_turn',
         name: 'Adrenaline Rush',
@@ -187,8 +189,6 @@ const Game: React.FC = () => {
              triggerFloatingText('QUAKE!', 0, 0, '#ff9900');
         }
       },
-
-      // Damage Upgrades
       {
         id: 'damage_boost_small',
         name: 'Sharpened Blade',
@@ -207,8 +207,6 @@ const Game: React.FC = () => {
           setStatusMessage('Power Charged! +30 Damage on next hit.');
         }
       },
-
-      // Defensive Upgrades
       {
          id: 'defense_shield',
          name: 'Iron Skin',
@@ -218,8 +216,6 @@ const Game: React.FC = () => {
              setStatusMessage('Iron Skin Active! 50% damage reduction next hit.');
          }
       },
-
-      // Economy / Meta Upgrades
       {
          id: 'instant_exp',
          name: 'Knowledge Scroll',
@@ -231,7 +227,6 @@ const Game: React.FC = () => {
       }
     ];
 
-    // Shuffle and pick 3
     const shuffled = allUpgrades.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 3);
   }, [triggerFloatingText, setPlayerHP, maxPlayerHP, setMaxPlayerHP, setConsecutiveTurns, setBoard, setNextTurnDamageBonus, setNextTurnDamageReduction, setPlayerEXP, setStatusMessage]);
@@ -241,7 +236,6 @@ const Game: React.FC = () => {
     if (!isAIMove && currentPlayer === 'O') return;
     if (isAIMove && currentPlayer === 'X') return;
 
-    // 1. Calculate Next State
     const newBoard = board.map(r => [...r]);
     newBoard[row][col] = currentPlayer;
     
@@ -261,7 +255,6 @@ const Game: React.FC = () => {
       if (currentPlayer === 'X' && nextTurnDamageBonus > 0) {
           damage += nextTurnDamageBonus;
       }
-      // Apply Damage Reduction
       if (currentPlayer === 'O' && nextTurnDamageReduction > 0) {
           damage = Math.floor(damage * (1 - nextTurnDamageReduction));
       }
@@ -278,7 +271,6 @@ const Game: React.FC = () => {
     const isLose = nextPlayerHP <= 0;
     const isGameOver = isWin || isLose || isDraw;
 
-    // 2. Apply State Updates
     setBoard(newBoard);
     setComboCount(combo);
     setEnemyHP(nextEnemyHP);
@@ -288,14 +280,12 @@ const Game: React.FC = () => {
     let statusMessages: string[] = [];
     let shouldTriggerGoldEffect = false;
 
-    // Blocking EXP & Status
     if (isBlockingMove && currentPlayer === 'X') {
       expGained += blockEXP;
       shouldTriggerGoldEffect = true;
       statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
     }
 
-    // Combo/Damage Logic & EXP
     if (combo > 0) {
         if (currentPlayer === 'X') {
             const lineExp = lineCompletionEXP * combo;
@@ -307,20 +297,18 @@ const Game: React.FC = () => {
             statusMessages.push(`Enemy deals ${damage} damage! ${combo > 1 ? `${combo}-line combo! ` : ''}Enemy gets bonus turn!`);
         }
         
-        // Handle Turn Bonus / Modifiers
         if (currentPlayer === 'X' && nextTurnDamageBonus > 0) {
-             setNextTurnDamageBonus(0); // Reset
+             setNextTurnDamageBonus(0);
              statusMessages.push('Bonus Damage Applied!');
         }
         if (currentPlayer === 'O' && nextTurnDamageReduction > 0) {
-             setNextTurnDamageReduction(0); // Reset
+             setNextTurnDamageReduction(0);
              statusMessages.push('Shield blocked damage!');
         }
 
         const newConsecutiveTurns = consecutiveTurns + lineCompletionBonusTurns;
         setConsecutiveTurns(newConsecutiveTurns - 1);
         
-        // Clear lines delay
         setTimeout(() => {
             const clearedBoard = clearWinningLines(newBoard, winningLines);
             setBoard(clearedBoard);
@@ -328,7 +316,6 @@ const Game: React.FC = () => {
         }, 1000);
         setLastWinningLines(winningLines);
     } else {
-        // No Combo
         if (consecutiveTurns > 0) {
             setConsecutiveTurns(prev => prev - 1);
         } else if (!isDraw) {
@@ -343,15 +330,10 @@ const Game: React.FC = () => {
         setPlayerEXP(prev => prev + expGained);
     }
 
-    // 3. Trigger UI Texts (Floating Text)
-    // Rule: Suppress "Blocked" and "Extra Turn" if Game Over (Win/Lose/Draw) happens.
-    
-    // Blocked Text
     if (isBlockingMove && currentPlayer === 'X' && !isGameOver) {
         triggerFloatingText('BLOCKED!', 0, 0, '#00ccff');
     }
 
-    // Hit / Combo Text
     if (combo > 0) {
          if (currentPlayer === 'X') {
             if (combo > 1) {
@@ -368,27 +350,21 @@ const Game: React.FC = () => {
          }
     }
 
-    // Draw
     if (isDraw) {
-        // Queue Draw Handler (which triggers "DRAW!" text)
         handleDraw();
     }
 
-    // Extra Turn Text (only if not game over, not combo, not draw)
     if (consecutiveTurns > 0 && !combo && !isDraw && !isGameOver) {
-         // Wait, if nextEnemyHP > 0 and nextPlayerHP > 0, and not draw.
          statusMessages.push(currentPlayer === 'X' ? 'Extra turn!' : 'Enemy extra turn!');
          triggerFloatingText('Extra Turn!', 0, 0, '#00ccff');
     }
 
-    // Victory / Defeat
     if (isWin) {
          triggerFloatingText('VICTORY!', 0, 0, '#00ff66', () => triggerGameOver('Player'));
     } else if (isLose) {
          triggerFloatingText('DEFEAT!', 0, 0, '#ff4444', () => triggerGameOver('Enemy'));
     }
 
-    // Gold Particles
     if (shouldTriggerGoldEffect) {
        const clientX = 'clientX' in event ? event.clientX : window.innerWidth / 2;
        const clientY = 'clientY' in event ? event.clientY : window.innerHeight / 2;
@@ -420,18 +396,16 @@ const Game: React.FC = () => {
     }
   }, [board]); 
 
-  // Enemy AI move
   useEffect(() => {
     if (currentPlayer === 'O' && !gameOver && !showUpgradeModal && !showLevelUpAnimation) {
       setIsEnemyThinking(true);
       const timer = setTimeout(() => {
         makeEnemyMove();
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [currentPlayer, gameOver, showUpgradeModal, showLevelUpAnimation, makeEnemyMove]);
 
-  // Check for level up
   useEffect(() => {
     if (playerEXP >= maxEXP && !showUpgradeModal && !showLevelUpAnimation && consecutiveTurns === 0 && currentPlayer === 'X') {
       setPlayerEXP(prev => prev - maxEXP);
@@ -452,7 +426,6 @@ const Game: React.FC = () => {
     }
   }, [playerEXP, maxEXP, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, currentPlayer, generateUpgrades]);
 
-  // Update status message
   useEffect(() => {
     if (!gameOver && !showUpgradeModal && !showLevelUpAnimation && comboCount === 0 && !statusMessage.includes('Draw!') && !statusMessage.includes('damage') && !statusMessage.includes('Upgraded:') && !statusMessage.includes('Extra turn') && !statusMessage.includes('Blocked')) {
       if (currentPlayer === 'X') {
@@ -492,7 +465,7 @@ const Game: React.FC = () => {
         <h1>Tic-Tac-KO</h1>
         <div className="header-buttons">
           <button onClick={resetGame} className="restart-icon-button" title="Restart Game">↻</button>
-          <button onClick={() => setShowSettings(true)} className="settings-button">⚙</button>
+          <button onClick={onBackToLevels} className="levels-button">☰</button>
         </div>
       </div>
 
@@ -513,6 +486,7 @@ const Game: React.FC = () => {
           winningLines={lastWinningLines}
           disabled={currentPlayer === 'O' || gameOver || showLevelUpAnimation}
           goldPiece={goldPiece}
+          isClearing={isClearing}
         />
 
         <StatusDisplay 
@@ -521,7 +495,6 @@ const Game: React.FC = () => {
           comboCount={comboCount}
         />
         
-        {/* Visual indicators for active buffs */}
         {(nextTurnDamageBonus > 0 || nextTurnDamageReduction > 0) && (
             <div className="buff-indicators">
                 {nextTurnDamageBonus > 0 && <span className="buff damage-buff">⚔️ +{nextTurnDamageBonus} DMG</span>}
@@ -529,7 +502,6 @@ const Game: React.FC = () => {
             </div>
         )}
 
-        {/* Removed Restart Button */}
       </div>
 
       {showLevelUpAnimation && (
@@ -543,18 +515,6 @@ const Game: React.FC = () => {
           upgrades={availableUpgrades}
           onSelect={handleUpgradeSelect}
         />
-      )}
-
-      {showSettings && (
-        <SettingsModal
-          soundEnabled={soundEnabled}
-          onSoundToggle={setSoundEnabled}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
-
-      {showHowToPlay && (
-        <HowToPlayOverlay onClose={() => setShowHowToPlay(false)} />
       )}
 
       {gameOver && (

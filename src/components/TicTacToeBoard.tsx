@@ -7,6 +7,7 @@ interface TicTacToeBoardProps {
   winningLines: WinningLines;
   disabled: boolean;
   goldPiece: [number, number] | null;
+  isClearing?: boolean;
 }
 
 const SketchyX = () => (
@@ -30,7 +31,8 @@ const TicTacToeBoard: React.FC<TicTacToeBoardProps> = ({
   onCellClick, 
   winningLines, 
   disabled,
-  goldPiece
+  goldPiece,
+  isClearing = false
 }) => {
   const isWinningCell = (row: number, col: number): boolean => {
     return winningLines.some(line => 
@@ -55,7 +57,7 @@ const TicTacToeBoard: React.FC<TicTacToeBoardProps> = ({
               onClick={(e) => !disabled && onCellClick(rowIndex, colIndex, e)}
               disabled={disabled || cell !== ''}
             >
-              <div className="cell-content">
+              <div className={`cell-content ${isClearing ? 'shrink-out' : ''}`}>
                 {cell === 'X' && <SketchyX />}
                 {cell === 'O' && <SketchyO />}
               </div>
