@@ -1,0 +1,466 @@
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(16px, 4vw, 24px);
+}
+
+.game-header h1 {
+  color: #2d3142;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: 800;
+  text-shadow: 2px 2px 0px #bfc0c0;
+  transform: rotate(-1deg);
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.help-button, .settings-button {
+  background: #4f5d75;
+  color: white;
+  border: 2px solid #2d3142;
+  min-height: max(40px, 8vmin);
+  min-width: max(40px, 8vmin);
+  border-radius: 50%;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 3px 3px 0px #2d3142;
+}
+
+.help-button:hover, .settings-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #2d3142;
+}
+
+.help-button:active, .settings-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px #2d3142;
+}
+
+/* Status Display */
+.status-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.status-bubble {
+  background: white;
+  border: 2px solid #2d3142;
+  border-radius: 20px;
+  padding: 12px 20px;
+  box-shadow: 3px 3px 0px #2d3142;
+  position: relative;
+  transform: rotate(-1deg);
+  animation: float 3s ease-in-out infinite;
+  
+  width: 320px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #2d3142;
+}
+
+.status-message {
+  font-weight: bold;
+  color: #2d3142;
+  transition: font-size 0.2s ease;
+  text-align: center;
+  line-height: 1.2;
+  
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.combo-indicator {
+  color: #e74c3c;
+  font-weight: 800;
+  font-size: clamp(12px, 3vw, 14px);
+  margin-top: 4px;
+  animation: bounce 0.5s ease-in-out;
+}
+
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(18px, 4vw, 24px);
+  font-weight: bold;
+}
+
+.turn-mark {
+  padding: 8px 12px;
+  border: 2px solid #2d3142;
+  border-radius: 50%;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  transition: all 0.3s;
+}
+
+.turn-mark.active {
+  background: #4f5d75;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(79, 93, 117, 0.5);
+  animation: active-pulse 2s infinite;
+}
+
+.vs {
+  color: #2d3142;
+  font-weight: 800;
+}
+
+.restart-button {
+  background: #e74c3c;
+  color: white;
+  border: 3px solid #2d3142;
+  min-height: max(50px, 10vmin);
+  padding: clamp(12px, 3vmin, 16px) clamp(24px, 6vmin, 32px);
+  border-radius: 16px;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 4px 4px 0px #2d3142;
+  transform: rotate(-1deg);
+}
+
+.restart-button:hover {
+  transform: translate(-2px, -2px) rotate(-1deg);
+  box-shadow: 6px 6px 0px #2d3142;
+}
+
+.restart-button:active {
+  transform: translate(2px, 2px) rotate(-1deg);
+  box-shadow: 2px 2px 0px #2d3142;
+}
+
+.restart-button.large {
+  font-size: clamp(18px, 4vw, 22px);
+  padding: clamp(16px, 4vmin, 20px) clamp(32px, 8vmin, 40px);
+  min-height: max(60px, 12vmin);
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+  opacity: 0;
+  animation: fade-in 0.3s forwards;
+}
+
+.upgrade-modal, .settings-modal, .how-to-play-modal, .game-over-modal {
+  background: #fefdfb;
+  border: 3px solid #2d3142;
+  border-radius: 20px;
+  padding: clamp(24px, 6vw, 32px);
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 8px 8px 0px #2d3142;
+  text-align: center;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.9);
+  opacity: 0;
+  animation: pop-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.upgrade-modal h2, .settings-modal h2, .how-to-play-modal h2, .game-over-modal h2 {
+  color: #2d3142;
+  font-size: clamp(20px, 5vw, 28px);
+  margin-bottom: 16px;
+  transform: rotate(-1deg);
+}
+
+.upgrade-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.upgrade-option {
+  background: #4f5d75;
+  color: white;
+  border: 2px solid #2d3142;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  box-shadow: 3px 3px 0px #2d3142;
+  animation: slide-in-right 0.4s ease-out backwards;
+}
+
+.upgrade-option:nth-child(1) { animation-delay: 0.1s; }
+.upgrade-option:nth-child(2) { animation-delay: 0.2s; }
+.upgrade-option:nth-child(3) { animation-delay: 0.3s; }
+
+.upgrade-option:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #2d3142;
+}
+
+.upgrade-name {
+  font-weight: bold;
+  font-size: clamp(16px, 4vw, 18px);
+  margin-bottom: 4px;
+}
+
+.upgrade-description {
+  font-size: clamp(14px, 3vw, 16px);
+  opacity: 0.9;
+}
+
+.setting-item {
+  margin: 16px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 2px solid #2d3142;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-button {
+  background: #4f5d75;
+  color: white;
+  border: 2px solid #2d3142;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: clamp(14px, 3vw, 16px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 3px 3px 0px #2d3142;
+  margin-top: 16px;
+}
+
+.close-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #2d3142;
+}
+
+.tutorial-content {
+  text-align: left;
+  margin: 20px 0;
+}
+
+.tutorial-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 2px solid #2d3142;
+  border-radius: 12px;
+}
+
+.tutorial-section h3 {
+  color: #2d3142;
+  margin-bottom: 8px;
+  font-size: clamp(16px, 4vw, 18px);
+}
+
+.tutorial-section p, .tutorial-section li {
+  color: #2d3142;
+  font-size: clamp(14px, 3vw, 16px);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.tutorial-section ul {
+  padding-left: 20px;
+}
+
+.game-over-modal h2.victory {
+  color: #27ae60;
+}
+
+.game-over-modal h2.defeat {
+  color: #e74c3c;
+}
+
+.result-text {
+  font-size: clamp(16px, 4vw, 18px);
+  color: #2d3142;
+  margin: 20px 0;
+  line-height: 1.4;
+}
+
+/* Responsive Overrides for components */
+@media (max-width: 480px) {
+  .turn-indicator {
+    gap: 8px;
+  }
+  
+  .turn-mark {
+    min-width: 35px;
+    min-height: 35px;
+    padding: 6px 10px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Upgrade Specific Styling to show board */
+.upgrade-overlay {
+  align-items: flex-end; /* Align to bottom */
+  background: rgba(0, 0, 0, 0.3); /* Transparent to show board */
+  padding-bottom: clamp(20px, 4vh, 30px);
+}
+
+.upgrade-overlay .upgrade-modal {
+  width: 95%;
+  max-width: 800px;
+  background: rgba(254, 253, 251, 0.95);
+  backdrop-filter: blur(5px);
+  margin: 0;
+  animation: slide-up 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  max-height: 70vh; /* Increased height */
+  padding: 16px 20px; /* Increased padding */
+  overflow-y: auto; /* Allow vertical scroll if content is too tall (wrapping) */
+}
+
+.upgrade-overlay h2 {
+    font-size: clamp(20px, 5vw, 26px); /* Slightly larger */
+    margin-bottom: 12px;
+}
+
+.upgrade-overlay .upgrade-options {
+  flex-direction: row;
+  flex-wrap: wrap; /* Allow wrapping */
+  justify-content: center; /* Center them */
+  gap: 10px; /* Slightly larger gap */
+  margin: 0;
+  /* Removed overflow-x: auto to prevent horizontal scrollbar */
+}
+
+.upgrade-overlay .upgrade-option {
+  flex: 1 1 120px; /* Allow shrinking but try to keep 120px base width. Will wrap if needed */
+  min-width: 0; /* Allow shrinking below min content if flex-basis handles it? No, keeping it unset or specific is safer */
+  padding: 12px; /* Increased padding */
+}
+
+.upgrade-overlay .upgrade-name {
+  font-size: 14px; /* Larger */
+  margin-bottom: 4px;
+}
+
+.upgrade-overlay .upgrade-description {
+  font-size: 12px; /* Larger */
+  line-height: 1.2;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Level Up Animation */
+.level-up-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.level-up-text {
+  font-size: clamp(3rem, 10vw, 6rem);
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 
+    3px 3px 0 #000,
+    -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  animation: level-up-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform: scale(0);
+}
+
+@keyframes level-up-pop {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  70% { transform: scale(0.9) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Header Restart Button */
+.restart-icon-button {
+  background: #e74c3c;
+  color: white;
+  border: 2px solid #2d3142;
+  min-height: max(40px, 8vmin);
+  min-width: max(40px, 8vmin);
+  border-radius: 50%;
+  font-size: clamp(20px, 4vw, 24px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 3px 3px 0px #2d3142;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restart-icon-button:hover {
+  transform: translate(-2px, -2px) rotate(180deg);
+  box-shadow: 5px 5px 0px #2d3142;
+}
+
+.restart-icon-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px #2d3142;
+}

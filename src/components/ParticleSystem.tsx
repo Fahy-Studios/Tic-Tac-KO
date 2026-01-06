@@ -20,18 +20,15 @@ interface ParticleSystemProps {
 const ParticleSystem: React.FC<ParticleSystemProps> = ({ events, targetRef }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const processedEventIds = useRef(new Set<number>());
-  // Use ReturnType<typeof setTimeout> to be environment agnostic or fallback to any/number
   const timeouts = useRef<Set<ReturnType<typeof setTimeout> | number>>(new Set());
 
   useEffect(() => {
     if (events.length === 0 || !targetRef.current) return;
 
-    // Filter for events we haven't processed yet
     const newEvents = events.filter(e => !processedEventIds.current.has(e.id));
     
     if (newEvents.length === 0) return;
 
-    // Mark these events as processed immediately
     newEvents.forEach(e => processedEventIds.current.add(e.id));
 
     const targetRect = targetRef.current.getBoundingClientRect();
@@ -53,8 +50,6 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ events, targetRef }) =>
 
     setParticles(prev => [...prev, ...newParticles]);
 
-    // Cleanup particles after animation
-    // Animation is 1.2s + max delay 0.14s ~ 1.34s. Using 1.5s to be safe.
     const timer = setTimeout(() => {
         setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
         timeouts.current.delete(timer);
@@ -64,7 +59,6 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ events, targetRef }) =>
 
   }, [events, targetRef]);
 
-  // Cleanup all timeouts on unmount
   useEffect(() => {
     return () => {
       timeouts.current.forEach(t => clearTimeout(t));
@@ -72,7 +66,6 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ events, targetRef }) =>
     };
   }, []);
 
-  // Clean up processed IDs if events array is cleared
   useEffect(() => {
     if (events.length === 0) {
       processedEventIds.current.clear();
@@ -92,15 +85,7 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ events, targetRef }) =>
             '--target-y': `${p.targetY}px`,
             '--random-x': `${p.randomX}px`,
             '--random-y': `${p.randomY}px`,
-            '--delay': `${(i % 8) * 0.02}s`, // Ensure delay is based on the batch index, not total index
-            backgroundColor: p.color,
-            // Enhanced visibility: Solid dark outline using 4-way drop-shadow to mimic stroke
-            filter: `
-              drop-shadow(1px 0 0 #2d3142)
-              drop-shadow(-1px 0 0 #2d3142)
-              drop-shadow(0 1px 0 #2d3142)
-              drop-shadow(0 -1px 0 #2d3142)
-            `
+            '--delay': `${(i % 8) * 0.02}s`,
           } as React.CSSProperties}
         />
       ))}

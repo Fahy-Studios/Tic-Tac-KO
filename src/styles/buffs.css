@@ -1,0 +1,32 @@
+.buff-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  height: 24px; /* prevent layout shift */
+}
+
+.buff {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.damage-buff {
+  background-color: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid #ff4444;
+}
+
+.defense-buff {
+  background-color: rgba(0, 204, 255, 0.2);
+  color: #00ccff;
+  border: 1px solid #00ccff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

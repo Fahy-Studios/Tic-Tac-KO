@@ -1,0 +1,30 @@
+.game-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: clamp(16px, 4vw, 32px);
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  animation: fade-in-up 0.5s ease-out;
+}
+
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 4vw, 24px);
+}
+
+.battle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .game-layout {
+    gap: 32px;
+  }
+}

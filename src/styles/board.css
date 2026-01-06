@@ -1,0 +1,120 @@
+.board-container {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px dashed #2d3142;
+  border-radius: 16px;
+}
+
+.tic-tac-toe-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(4px, 2vw, 8px);
+  padding: 8px;
+}
+
+.board-cell {
+  background: #f8f9fa;
+  border: 3px solid #2d3142;
+  min-height: max(60px, 12vmin);
+  min-width: max(60px, 12vmin);
+  /* Use aspect-ratio to ensure square shape */
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  font-size: clamp(24px, 6vw, 36px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 3px 3px 0px #2d3142;
+}
+
+.board-cell:hover:not(.disabled):not(.filled) {
+  background: #e9ecef;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #2d3142;
+}
+
+.board-cell:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px #2d3142;
+}
+
+.board-cell.filled {
+  background: #fff;
+  cursor: default;
+}
+
+.board-cell.winning {
+  background: #ffe066 !important;
+  animation: winning-flash 1s ease-in-out;
+}
+
+.board-cell.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cell-content {
+  /* Position absolute to avoid layout shifts */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure pointer events pass through to button if needed */
+  pointer-events: none;
+}
+
+/* Sketchy SVG Styles */
+.sketch-mark {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sketch-stroke {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: draw-stroke 0.4s ease-out forwards;
+  transition: stroke 0.3s ease;
+}
+
+.sketch-x .sketch-stroke {
+  stroke: #e74c3c;
+}
+
+.sketch-o .sketch-stroke {
+  stroke: #3498db;
+}
+
+/* Gold Mark Style override */
+.gold-mark .sketch-stroke {
+  stroke: #f39c12 !important;
+  filter: drop-shadow(0 0 5px rgba(243, 156, 18, 0.6));
+}
+
+@media (min-width: 768px) {
+  .board-container {
+    padding: 24px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .board-cell:active:not(.disabled):not(.filled) {
+    background: #dee2e6;
+    transform: scale(0.95);
+  }
+}

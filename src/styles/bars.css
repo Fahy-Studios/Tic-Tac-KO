@@ -1,0 +1,103 @@
+.hp-bars {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hp-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: clamp(12px, 3vw, 14px);
+  color: #2d3142;
+}
+
+.hp-bar-background {
+  height: 20px;
+  background: #e0e0e0;
+  border: 2px solid #2d3142;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 6px;
+  background: linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 50%, currentColor 50%, currentColor 75%, transparent 75%);
+  background-size: 8px 8px;
+  animation: progress-stripes 0.5s linear infinite;
+}
+
+.hearts {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  font-size: clamp(12px, 3vw, 16px);
+}
+
+.heart.filled {
+  color: #e74c3c;
+  animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.heart.empty {
+  color: #bdc3c7;
+}
+
+.exp-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.exp-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: clamp(12px, 3vw, 14px);
+  color: #2d3142;
+}
+
+.exp-bar-background {
+  height: 16px;
+  background: #e0e0e0;
+  border: 2px solid #2d3142;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.exp-bar-fill {
+  height: 100%;
+  background: linear-gradient(45deg, #f39c12, #e67e22);
+  transition: width 0.5s ease;
+  border-radius: 4px;
+}
+
+.level-up-indicator {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background: #e74c3c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  animation: pulse 1s infinite;
+}
+
+@media (min-width: 768px) {
+  .hp-bars {
+    gap: 32px;
+  }
+}

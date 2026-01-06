@@ -1,11 +1,5 @@
 import React from 'react';
-
-interface Upgrade {
-  id: string;
-  name: string;
-  description: string;
-  effect: () => void;
-}
+import { Upgrade } from '../types';
 
 interface UpgradeModalProps {
   upgrades: Upgrade[];
@@ -14,12 +8,11 @@ interface UpgradeModalProps {
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ upgrades, onSelect }) => {
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay upgrade-overlay">
       <div className="upgrade-modal">
-        <h2>Level Up!</h2>
-        <p>Choose your upgrade:</p>
+        <h2>Pick your upgrade</h2>
         <div className="upgrade-options">
-          {upgrades.map((upgrade, index) => (
+          {upgrades.map((upgrade) => (
             <button
               key={upgrade.id}
               className="upgrade-option"

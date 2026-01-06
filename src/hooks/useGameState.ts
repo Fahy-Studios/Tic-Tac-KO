@@ -1,13 +1,21 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { WinningLines, Upgrade, ParticleEvent, FloatingTextItem } from '../types';
-import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent } from '../utils/gameLogic';
 
 export const useGameState = () => {
   const [board, setBoard] = useState<string[][]>(
     Array(3).fill(null).map(() => Array(3).fill(''))
   );
+  
+  // HP & Stats
+  const [maxPlayerHP, setMaxPlayerHP] = useState(100);
+  const [maxEnemyHP, setMaxEnemyHP] = useState(100);
   const [playerHP, setPlayerHP] = useState(100);
   const [enemyHP, setEnemyHP] = useState(100);
+  
+  // Battle State
+  const [nextTurnDamageBonus, setNextTurnDamageBonus] = useState(0);
+  const [nextTurnDamageReduction, setNextTurnDamageReduction] = useState(0); // 0 to 1 (percentage)
+
   const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X');
   const [playerEXP, setPlayerEXP] = useState(0);
   const [maxEXP] = useState(100);
@@ -83,8 +91,12 @@ export const useGameState = () => {
 
   const resetGame = () => {
     setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
+    setMaxPlayerHP(100);
+    setMaxEnemyHP(100);
     setPlayerHP(100);
     setEnemyHP(100);
+    setNextTurnDamageBonus(0);
+    setNextTurnDamageReduction(0);
     setCurrentPlayer('X');
     setPlayerEXP(0);
     setGameOver(false);
@@ -106,6 +118,10 @@ export const useGameState = () => {
     board, setBoard,
     playerHP, setPlayerHP,
     enemyHP, setEnemyHP,
+    maxPlayerHP, setMaxPlayerHP,
+    maxEnemyHP, setMaxEnemyHP,
+    nextTurnDamageBonus, setNextTurnDamageBonus,
+    nextTurnDamageReduction, setNextTurnDamageReduction,
     currentPlayer, setCurrentPlayer,
     playerEXP, setPlayerEXP,
     maxEXP,

@@ -1,0 +1,150 @@
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+/* Shake Class */
+.shake {
+  animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes progress-stripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 8px 0; }
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes winning-flash {
+  0%, 100% { background-color: #ffe066; }
+  50% { background-color: #ffd93d; }
+}
+
+@keyframes draw-stroke {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(-1deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes active-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 93, 117, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(79, 93, 117, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 93, 117, 0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop-up {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Crystal EXP Particle */
+.exp-crystal {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* Diamond shape */
+  left: var(--start-x);
+  top: var(--start-y);
+  animation: crystal-fly 1.2s ease-in-out forwards;
+  animation-delay: var(--delay);
+  opacity: 0;
+  z-index: 10000;
+  
+  /* Matches EXP Bar */
+  background: linear-gradient(45deg, #f39c12, #e67e22);
+  
+  /* Black Outline using drop-shadow */
+  filter: 
+    drop-shadow(1px 0 0 #000)
+    drop-shadow(-1px 0 0 #000)
+    drop-shadow(0 1px 0 #000)
+    drop-shadow(0 -1px 0 #000);
+}
+
+@keyframes crystal-fly {
+  /* Phase 1: Spawn & Hover/Spread randomly */
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(var(--random-x), var(--random-y)) scale(1.2) rotate(45deg);
+  }
+  40% {
+    transform: translate(var(--random-x), var(--random-y)) scale(1) rotate(90deg);
+  }
+  
+  /* Phase 2: Accelerate to target */
+  100% {
+    transform: translate(calc(var(--target-x) - var(--start-x)), calc(var(--target-y) - var(--start-y))) scale(0.5) rotate(180deg);
+    opacity: 0;
+  }
+}
