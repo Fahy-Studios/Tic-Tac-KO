@@ -93,11 +93,11 @@
 }
 
 .sketch-x .sketch-stroke {
-  stroke: #e74c3c;
+  stroke: #4CAF50; /* Green (Player) */
 }
 
 .sketch-o .sketch-stroke {
-  stroke: #3498db;
+  stroke: #f44336; /* Red (Enemy) */
 }
 
 /* Gold Mark Style override */

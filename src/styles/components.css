@@ -63,7 +63,8 @@
   animation: float 3s ease-in-out infinite;
   
   width: 320px;
-  min-height: 60px;
+  /* Fixed height to prevent jumping when content changes (1 vs 2 lines, combo text) */
+  height: 90px;
   display: flex;
   flex-direction: column;
   justify-content: center;

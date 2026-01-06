@@ -48,21 +48,27 @@ const TicTacToeBoard: React.FC<TicTacToeBoardProps> = ({
     <div className="board-container">
       <div className="tic-tac-toe-board">
         {board.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <button
-              key={`${rowIndex}-${colIndex}`}
-              className={`board-cell ${cell ? 'filled' : ''} ${
-                isWinningCell(rowIndex, colIndex) ? 'winning' : ''
-              } ${disabled ? 'disabled' : ''} ${isGold(rowIndex, colIndex) ? 'gold-mark' : ''}`}
-              onClick={(e) => !disabled && onCellClick(rowIndex, colIndex, e)}
-              disabled={disabled || cell !== ''}
-            >
-              <div className={`cell-content ${isClearing ? 'shrink-out' : ''}`}>
-                {cell === 'X' && <SketchyX />}
-                {cell === 'O' && <SketchyO />}
-              </div>
-            </button>
-          ))
+          row.map((cell, colIndex) => {
+            const isWinning = isWinningCell(rowIndex, colIndex);
+            // Shrink if clearing AND (it's a global clear (no winning lines) OR this specific cell is winning)
+            const shouldShrink = isClearing && (winningLines.length === 0 || isWinning);
+
+            return (
+              <button
+                key={`${rowIndex}-${colIndex}`}
+                className={`board-cell ${cell ? 'filled' : ''} ${
+                  isWinning ? 'winning' : ''
+                } ${disabled ? 'disabled' : ''} ${isGold(rowIndex, colIndex) ? 'gold-mark' : ''}`}
+                onClick={(e) => !disabled && onCellClick(rowIndex, colIndex, e)}
+                disabled={disabled || cell !== ''}
+              >
+                <div className={`cell-content ${shouldShrink ? 'shrink-out' : ''}`}>
+                  {cell === 'X' && <SketchyX />}
+                  {cell === 'O' && <SketchyO />}
+                </div>
+              </button>
+            );
+          })
         )}
       </div>
     </div>
