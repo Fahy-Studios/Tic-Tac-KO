@@ -11,6 +11,10 @@
   gap: 4px;
 }
 
+.hp-bar-container.rotated {
+    transform: rotate(180deg);
+}
+
 .hp-label {
   display: flex;
   justify-content: space-between;

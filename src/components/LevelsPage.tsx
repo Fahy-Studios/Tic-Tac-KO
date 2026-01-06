@@ -2,9 +2,10 @@ import React from 'react';
 
 interface LevelsPageProps {
   onLevelSelect: (level: number) => void;
+  onBack: () => void;
 }
 
-const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect }) => {
+const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect, onBack }) => {
   return (
     <div className="levels-page">
       <div className="levels-header">
@@ -24,6 +25,10 @@ const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect }) => {
             <div className="level-number">3</div>
             <div className="level-name">Locked</div>
         </button>
+      </div>
+
+      <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>
+        <button className="back-button" onClick={onBack}>BACK</button>
       </div>
     </div>
   );

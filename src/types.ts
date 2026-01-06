@@ -23,3 +23,5 @@ export interface FloatingTextItem {
   color?: string;
   onCompleteCallback?: () => void;
 }
+
+export type GameMode = 'singleplayer' | 'local_multiplayer';

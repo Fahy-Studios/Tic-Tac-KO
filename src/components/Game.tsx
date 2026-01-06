@@ -10,13 +10,14 @@ import ParticleSystem from './ParticleSystem';
 import FloatingText from './FloatingText';
 import { useGameState } from '../hooks/useGameState';
 import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent, findBestMove } from '../utils/gameLogic';
-import { Upgrade } from '../types';
+import { Upgrade, GameMode } from '../types';
 
 interface GameProps {
   onBackToLevels: () => void;
+  gameMode?: GameMode;
 }
 
-const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
+const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }) => {
   const {
     board, setBoard,
     playerHP, setPlayerHP,
@@ -60,9 +61,16 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
   const triggerGameOver = useCallback((winnerName: string) => {
     setGameOver(true);
     setWinner(winnerName);
-    setStatusMessage(winnerName === 'Player' ? 'Victory! Enemy defeated!' : 'Defeat! You have fallen in battle!');
     
-    if (winnerName === 'Player') {
+    let message = '';
+    if (gameMode === 'local_multiplayer') {
+        message = winnerName === 'Player' ? 'Player 1 Wins!' : 'Player 2 Wins!';
+    } else {
+        message = winnerName === 'Player' ? 'Victory! Enemy defeated!' : 'Defeat! You have fallen in battle!';
+    }
+    setStatusMessage(message);
+    
+    if (winnerName === 'Player' || (gameMode === 'local_multiplayer' && winnerName === 'Enemy')) {
         confetti({
             particleCount: 200,
             spread: 70,
@@ -70,7 +78,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
             colors: ['#FFD700', '#FFA500', '#FF4500', '#00FF00', '#00BFFF']
         });
     }
-  }, [setGameOver, setWinner, setStatusMessage]);
+  }, [setGameOver, setWinner, setStatusMessage, gameMode]);
 
   const handleDraw = useCallback(() => {
     if (gameOver) return;
@@ -96,14 +104,17 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         if (isPlayerDead || isEnemyDead) {
             setIsClearing(false); // Stop clearing if game over
             if (isPlayerDead && isEnemyDead) {
-                triggerGameOver('Enemy');
+                // In local multiplayer, double KO could be a draw or both lose.
+                // For simplicity, let's say Enemy (Player 2) wins if both die? Or Player 1?
+                // Usually draws. But let's keep existing logic structure.
+                triggerGameOver('Enemy'); // Or handle double KO specifically
                 triggerFloatingText('DEFEAT!', 0, 0, '#ff4444');
             } else if (isPlayerDead) {
                 triggerGameOver('Enemy');
-                triggerFloatingText('DEFEAT!', 0, 0, '#ff4444');
+                triggerFloatingText(gameMode === 'local_multiplayer' ? 'P2 WINS!' : 'DEFEAT!', 0, 0, '#ff4444');
             } else {
                 triggerGameOver('Player');
-                triggerFloatingText('VICTORY!', 0, 0, '#00ff66');
+                triggerFloatingText(gameMode === 'local_multiplayer' ? 'P1 WINS!' : 'VICTORY!', 0, 0, '#00ff66');
             }
         } else {
             setTimeout(() => {
@@ -121,7 +132,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         }
       }
     );
-  }, [gameOver, playerHP, enemyHP, drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, triggerShake, triggerGameOver, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount, setNextTurnDamageBonus, setNextTurnDamageReduction]);
+  }, [gameOver, playerHP, enemyHP, drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, triggerShake, triggerGameOver, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount, setNextTurnDamageBonus, setNextTurnDamageReduction, gameMode]);
 
   const generateUpgrades = useCallback((): Upgrade[] => {
     const allUpgrades: Upgrade[] = [
@@ -233,7 +244,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
 
   const handleCellClick = (row: number, col: number, event: React.MouseEvent<HTMLButtonElement> | { clientX: number, clientY: number }, isAIMove: boolean = false) => {
     if (board[row][col] !== '' || gameOver) return;
-    if (!isAIMove && currentPlayer === 'O') return;
+    if (!isAIMove && currentPlayer === 'O' && gameMode === 'singleplayer') return; // AI turn in singleplayer
     if (isAIMove && currentPlayer === 'X') return;
 
     const newBoard = board.map(r => [...r]);
@@ -283,18 +294,21 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
     if (isBlockingMove && currentPlayer === 'X') {
       expGained += blockEXP;
       shouldTriggerGoldEffect = true;
-      statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
+      if (gameMode === 'singleplayer') statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
+      else statusMessages.push(`Blocked!`);
     }
 
     if (combo > 0) {
-        if (currentPlayer === 'X') {
-            const lineExp = lineCompletionEXP * combo;
-            expGained += lineExp;
-            shouldTriggerGoldEffect = true;
-            statusMessages.push(`${combo === 1 ? 'Line completed!' : `${combo}-line combo!`} Deal ${damage} damage!`);
+        const attackerName = currentPlayer === 'X' ? (gameMode === 'local_multiplayer' ? 'Player 1' : 'You') : (gameMode === 'local_multiplayer' ? 'Player 2' : 'Enemy');
+        
+        const lineExp = lineCompletionEXP * combo;
+        expGained += lineExp;
+        shouldTriggerGoldEffect = true;
+        statusMessages.push(`${combo === 1 ? 'Line completed!' : `${combo}-line combo!`} ${attackerName} deals ${damage} damage!`);
+        if (gameMode === 'singleplayer' && currentPlayer === 'X') {
             statusMessages.push(`+${lineExp} EXP! Bonus turn!`);
         } else {
-            statusMessages.push(`Enemy deals ${damage} damage! ${combo > 1 ? `${combo}-line combo! ` : ''}Enemy gets bonus turn!`);
+            statusMessages.push('Bonus turn!');
         }
         
         if (currentPlayer === 'X' && nextTurnDamageBonus > 0) {
@@ -326,7 +340,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         }
     }
     
-    if (expGained > 0) {
+    if (expGained > 0 && gameMode === 'singleplayer') {
         setPlayerEXP(prev => prev + expGained);
     }
 
@@ -343,9 +357,9 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
             }
          } else {
              if (combo > 1) {
-                triggerFloatingText(`ENEMY COMBO! -${damage}`, 0, 0, '#ff4444');
+                triggerFloatingText(`${gameMode === 'local_multiplayer' ? 'P2' : 'ENEMY'} COMBO! -${damage}`, 0, 0, '#ff4444');
              } else {
-                triggerFloatingText(`OUCH! -${damage}`, 0, 0, '#ff4444');
+                triggerFloatingText(`HIT! -${damage}`, 0, 0, '#ff4444');
              }
          }
     }
@@ -355,14 +369,14 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
     }
 
     if (consecutiveTurns > 0 && !combo && !isDraw && !isGameOver) {
-         statusMessages.push(currentPlayer === 'X' ? 'Extra turn!' : 'Enemy extra turn!');
+         statusMessages.push('Extra turn!');
          triggerFloatingText('Extra Turn!', 0, 0, '#00ccff');
     }
 
     if (isWin) {
-         triggerFloatingText('VICTORY!', 0, 0, '#00ff66', () => triggerGameOver('Player'));
+         triggerFloatingText(gameMode === 'local_multiplayer' ? 'P1 WINS!' : 'VICTORY!', 0, 0, '#00ff66', () => triggerGameOver('Player'));
     } else if (isLose) {
-         triggerFloatingText('DEFEAT!', 0, 0, '#ff4444', () => triggerGameOver('Enemy'));
+         triggerFloatingText(gameMode === 'local_multiplayer' ? 'P2 WINS!' : 'DEFEAT!', 0, 0, '#ff4444', () => triggerGameOver('Enemy'));
     }
 
     if (shouldTriggerGoldEffect) {
@@ -397,17 +411,17 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
   }, [board]); 
 
   useEffect(() => {
-    if (currentPlayer === 'O' && !gameOver && !showUpgradeModal && !showLevelUpAnimation) {
+    if (gameMode === 'singleplayer' && currentPlayer === 'O' && !gameOver && !showUpgradeModal && !showLevelUpAnimation) {
       setIsEnemyThinking(true);
       const timer = setTimeout(() => {
         makeEnemyMove();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [currentPlayer, gameOver, showUpgradeModal, showLevelUpAnimation, makeEnemyMove]);
+  }, [currentPlayer, gameOver, showUpgradeModal, showLevelUpAnimation, makeEnemyMove, gameMode]);
 
   useEffect(() => {
-    if (playerEXP >= maxEXP && !showUpgradeModal && !showLevelUpAnimation && consecutiveTurns === 0 && currentPlayer === 'X') {
+    if (gameMode === 'singleplayer' && playerEXP >= maxEXP && !showUpgradeModal && !showLevelUpAnimation && consecutiveTurns === 0 && currentPlayer === 'X') {
       setPlayerEXP(prev => prev - maxEXP);
       setAvailableUpgrades(generateUpgrades());
       setShowLevelUpAnimation(true);
@@ -424,17 +438,21 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         setShowUpgradeModal(true);
       }, 2000);
     }
-  }, [playerEXP, maxEXP, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, currentPlayer, generateUpgrades]);
+  }, [playerEXP, maxEXP, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, currentPlayer, generateUpgrades, gameMode]);
 
   useEffect(() => {
     if (!gameOver && !showUpgradeModal && !showLevelUpAnimation && comboCount === 0 && !statusMessage.includes('Draw!') && !statusMessage.includes('damage') && !statusMessage.includes('Upgraded:') && !statusMessage.includes('Extra turn') && !statusMessage.includes('Blocked')) {
       if (currentPlayer === 'X') {
-        setStatusMessage(consecutiveTurns > 0 ? 'Bonus turn! Place your X' : 'Your turn! Place an X');
-      } else if (isEnemyThinking) {
-        setStatusMessage(consecutiveTurns > 0 ? 'Enemy bonus turn! Enemy thinking...' : 'Enemy is thinking...');
+        setStatusMessage(consecutiveTurns > 0 ? (gameMode === 'local_multiplayer' ? 'Player 1 Bonus turn!' : 'Bonus turn! Place your X') : (gameMode === 'local_multiplayer' ? 'Player 1 Turn (X)' : 'Your turn! Place an X'));
+      } else {
+        if (gameMode === 'local_multiplayer') {
+             setStatusMessage(consecutiveTurns > 0 ? 'Player 2 Bonus turn!' : 'Player 2 Turn (O)');
+        } else if (isEnemyThinking) {
+             setStatusMessage(consecutiveTurns > 0 ? 'Enemy bonus turn! Enemy thinking...' : 'Enemy is thinking...');
+        }
       }
     }
-  }, [currentPlayer, gameOver, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, comboCount, isEnemyThinking, statusMessage]);
+  }, [currentPlayer, gameOver, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, comboCount, isEnemyThinking, statusMessage, gameMode]);
 
   const handleUpgradeSelect = (upgrade: Upgrade) => {
     setShowUpgradeModal(false);
@@ -447,7 +465,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
   };
 
   return (
-    <div className={`game-container ${isShaking ? 'shake' : ''}`}>
+    <div className={`game-container ${isShaking ? 'shake' : ''} ${gameMode === 'local_multiplayer' ? 'local-multiplayer' : ''}`}>
       <ParticleSystem events={particleEvents} targetRef={expBarRef} />
       {floatingTexts.map(ft => (
         <FloatingText
@@ -461,48 +479,98 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         />
       ))}
       
+      {/* Header */}
       <div className="game-header">
-        <h1>Tic-Tac-KO</h1>
-        <div className="header-buttons">
+         <h1>Tic-Tac-KO</h1>
+         <div className="header-buttons">
           <button onClick={resetGame} className="restart-icon-button" title="Restart Game">↻</button>
           <button onClick={onBackToLevels} className="levels-button">☰</button>
-        </div>
+         </div>
       </div>
 
-      <div className="game-layout">
-        <div className="battle-info">
-          <div className="hp-bars">
-            <HPBar label="You" hp={playerHP} maxHP={maxPlayerHP} isPlayer={true} />
-            <HPBar label="Enemy" hp={enemyHP} maxHP={100} isPlayer={false} />
-          </div>
-          <div ref={expBarRef} style={{ position: 'relative' }}>
-            <EXPBar exp={playerEXP} maxExp={maxEXP} />
-          </div>
-        </div>
-
-        <TicTacToeBoard 
-          board={board} 
-          onCellClick={(row, col, e) => handleCellClick(row, col, e)}
-          winningLines={lastWinningLines}
-          disabled={currentPlayer === 'O' || gameOver || showLevelUpAnimation}
-          goldPiece={goldPiece}
-          isClearing={isClearing}
-        />
-
-        <StatusDisplay 
-          message={statusMessage}
-          currentPlayer={currentPlayer}
-          comboCount={comboCount}
-        />
-        
-        {(nextTurnDamageBonus > 0 || nextTurnDamageReduction > 0) && (
-            <div className="buff-indicators">
-                {nextTurnDamageBonus > 0 && <span className="buff damage-buff">⚔️ +{nextTurnDamageBonus} DMG</span>}
-                {nextTurnDamageReduction > 0 && <span className="buff defense-buff">🛡️ Shielded</span>}
+      {gameMode === 'local_multiplayer' ? (
+        // Multiplayer Layout
+        <>
+            <div className="player-area player-2-area">
+                <div className="player-row">
+                    <HPBar 
+                        label="Player 2" 
+                        hp={enemyHP} 
+                        maxHP={100} 
+                        isPlayer={false}
+                        className="rotated"
+                    />
+                    <div className={`turn-indicator-icon rotated ${currentPlayer === 'O' ? 'active' : ''}`}>O</div>
+                </div>
             </div>
-        )}
 
-      </div>
+            <TicTacToeBoard 
+                board={board} 
+                onCellClick={(row, col, e) => handleCellClick(row, col, e)}
+                winningLines={lastWinningLines}
+                disabled={gameOver}
+                goldPiece={goldPiece}
+                isClearing={isClearing}
+            />
+
+            <div className="player-area player-1-area">
+                <div className="player-row">
+                    <div className={`turn-indicator-icon ${currentPlayer === 'X' ? 'active' : ''}`}>X</div>
+                    <HPBar 
+                        label="Player 1" 
+                        hp={playerHP} 
+                        maxHP={maxPlayerHP} 
+                        isPlayer={true} 
+                    />
+                </div>
+            </div>
+        </>
+      ) : (
+        // Singleplayer Layout
+        <div className="game-layout">
+            <div className="battle-info">
+            <div className="hp-bars">
+                <HPBar 
+                    label="You" 
+                    hp={playerHP} 
+                    maxHP={maxPlayerHP} 
+                    isPlayer={true} 
+                />
+                <HPBar 
+                    label="Enemy" 
+                    hp={enemyHP} 
+                    maxHP={100} 
+                    isPlayer={false}
+                />
+            </div>
+            <div ref={expBarRef} style={{ position: 'relative' }}>
+                <EXPBar exp={playerEXP} maxExp={maxEXP} />
+            </div>
+            </div>
+
+            <TicTacToeBoard 
+            board={board} 
+            onCellClick={(row, col, e) => handleCellClick(row, col, e)}
+            winningLines={lastWinningLines}
+            disabled={(currentPlayer === 'O') || gameOver || showLevelUpAnimation}
+            goldPiece={goldPiece}
+            isClearing={isClearing}
+            />
+
+            <StatusDisplay 
+            message={statusMessage}
+            currentPlayer={currentPlayer}
+            comboCount={comboCount}
+            />
+            
+            {(nextTurnDamageBonus > 0 || nextTurnDamageReduction > 0) && (
+                <div className="buff-indicators">
+                    {nextTurnDamageBonus > 0 && <span className="buff damage-buff">⚔️ +{nextTurnDamageBonus} DMG</span>}
+                    {nextTurnDamageReduction > 0 && <span className="buff defense-buff">🛡️ Shielded</span>}
+                </div>
+            )}
+        </div>
+      )}
 
       {showLevelUpAnimation && (
         <div className="level-up-overlay">
@@ -521,6 +589,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels }) => {
         <GameOverModal
           winner={winner}
           onRestart={resetGame}
+          isMultiplayer={gameMode === 'local_multiplayer'}
         />
       )}
     </div>

@@ -22,6 +22,85 @@
   gap: 12px;
 }
 
+/* Local Multiplayer Layout */
+.game-container.local-multiplayer {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+.game-container.local-multiplayer .game-header {
+    /* Maybe make it smaller or minimal in MP */
+    margin-bottom: 10px;
+    /* If we want header at top, we can use absolute or just let it be in flow */
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    z-index: 10;
+}
+
+.player-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    align-items: center;
+}
+
+.player-2-area {
+    /* Top player */
+    flex-direction: column-reverse; /* Put indicator close to board? Or bar? */
+    /* Let's keep bar at very top, then indicator */
+}
+
+.player-1-area {
+    /* Bottom player */
+}
+
+.turn-indicator-icon {
+    font-size: 2rem;
+    font-weight: bold;
+    width: 50px;
+    height: 50px;
+    border: 3px solid #2d3142;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: #2d3142;
+    transition: all 0.3s ease;
+}
+
+.turn-indicator-icon.active {
+    background: #4f5d75;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(79, 93, 117, 0.5);
+}
+
+.player-2-area .turn-indicator-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.player-2-area .turn-indicator-icon.rotated.active {
+    transform: rotate(180deg) scale(1.1);
+}
+
+.player-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+
 /* Responsive Design */
 @media (min-width: 768px) {
   .game-layout {

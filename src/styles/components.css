@@ -138,7 +138,7 @@
 }
 
 .restart-button {
-  background: #e74c3c;
+  background: #f39c12; /* Flipped to Orange */
   color: white;
   border: 3px solid #2d3142;
   min-height: max(50px, 10vmin);
@@ -166,6 +166,31 @@
   font-size: clamp(18px, 4vw, 22px);
   padding: clamp(16px, 4vmin, 20px) clamp(32px, 8vmin, 40px);
   min-height: max(60px, 12vmin);
+}
+
+.back-button {
+  background: #e74c3c; /* Red */
+  color: white;
+  border: 3px solid #2d3142;
+  min-height: max(50px, 10vmin);
+  padding: clamp(12px, 3vmin, 16px) clamp(24px, 6vmin, 32px);
+  border-radius: 16px;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 4px 4px 0px #2d3142;
+  transform: rotate(-1deg);
+}
+
+.back-button:hover {
+  transform: translate(-2px, -2px) rotate(-1deg);
+  box-shadow: 6px 6px 0px #2d3142;
+}
+
+.back-button:active {
+  transform: translate(2px, 2px) rotate(-1deg);
+  box-shadow: 2px 2px 0px #2d3142;
 }
 
 /* Modals */
@@ -428,7 +453,7 @@
 
 /* Header Restart Button */
 .restart-icon-button {
-  background: #e74c3c;
+  background: #f39c12; /* Flipped to Orange */
   color: white;
   border: 2px solid #2d3142;
   min-height: max(40px, 8vmin);
@@ -472,6 +497,13 @@
   transform: rotate(-3deg);
 }
 
+.start-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
 .start-button {
   background: #e74c3c;
   color: white;
@@ -494,6 +526,21 @@
 .start-button:active {
   transform: translate(2px, 2px) rotate(2deg);
   box-shadow: 2px 2px 0px #2d3142;
+}
+
+.start-button.secondary {
+  background: #f39c12;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  padding: 15px 30px;
+  transform: rotate(-2deg);
+}
+
+.start-button.secondary:hover {
+  transform: translate(-4px, -4px) rotate(-2deg);
+}
+
+.start-button.secondary:active {
+  transform: translate(2px, 2px) rotate(-2deg);
 }
 
 /* Levels Page */
@@ -562,7 +609,7 @@
 
 /* Levels Button in Game Header */
 .levels-button {
-  background: #f39c12; /* Different color */
+  background: #e74c3c; /* Flipped to Red */
   color: white;
   border: 2px solid #2d3142;
   min-height: max(40px, 8vmin);

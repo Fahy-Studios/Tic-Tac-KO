@@ -5,14 +5,15 @@ interface HPBarProps {
   hp: number;
   maxHP: number;
   isPlayer: boolean;
+  className?: string;
 }
 
-const HPBar: React.FC<HPBarProps> = ({ label, hp, maxHP, isPlayer }) => {
+const HPBar: React.FC<HPBarProps> = ({ label, hp, maxHP, isPlayer, className = '' }) => {
   const percentage = (hp / maxHP) * 100;
   const hearts = Math.ceil(hp / 20); // 5 hearts max
 
   return (
-    <div className={`hp-bar-container ${isPlayer ? 'player' : 'enemy'}`}>
+    <div className={`hp-bar-container ${isPlayer ? 'player' : 'enemy'} ${className}`}>
       <div className="hp-label">
         <span className="label-text">{label}</span>
         <span className="hp-text">{hp}/{maxHP}</span>
