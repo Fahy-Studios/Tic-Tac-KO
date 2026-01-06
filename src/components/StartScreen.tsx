@@ -1,4 +1,5 @@
 import React from 'react';
+import logo from '../assets/logo.png';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -8,7 +9,7 @@ interface StartScreenProps {
 const StartScreen: React.FC<StartScreenProps> = ({ onStart, onLocalMultiplayer }) => {
   return (
     <div className="start-screen">
-      <h1 className="game-title">Tic-Tac-KO</h1>
+      <img src={logo} alt="Tic-Tac-KO" className="game-logo" />
       <div className="start-buttons">
         <button className="start-button" onClick={onStart}>CAMPAIGN</button>
         <button className="start-button secondary" onClick={onLocalMultiplayer}>LOCAL MULTIPLAYER</button>

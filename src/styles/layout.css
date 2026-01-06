@@ -29,7 +29,7 @@
     flex-direction: column;
     justify-content: center;
     gap: 20px;
-    padding-top: 10px;
+    padding-top: 80px; /* Space for absolute header */
     padding-bottom: 20px;
 }
 
