@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSound } from '../hooks/useSound';
 
 interface LevelsPageProps {
   onLevelSelect: (level: number) => void;
@@ -6,6 +7,8 @@ interface LevelsPageProps {
 }
 
 const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect, onBack }) => {
+  const { playClick } = useSound();
+
   return (
     <div className="levels-page">
       <div className="levels-header">
@@ -13,7 +16,13 @@ const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect, onBack }) => {
       </div>
       
       <div className="levels-grid">
-        <button className="level-card" onClick={() => onLevelSelect(1)}>
+        <button 
+            className="level-card" 
+            onClick={() => {
+                playClick();
+                onLevelSelect(1);
+            }}
+        >
             <div className="level-number">1</div>
             <div className="level-name">The Beginning</div>
         </button>
@@ -28,7 +37,15 @@ const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect, onBack }) => {
       </div>
 
       <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>
-        <button className="back-button" onClick={onBack}>BACK</button>
+        <button 
+            className="back-button" 
+            onClick={() => {
+                playClick();
+                onBack();
+            }}
+        >
+            BACK
+        </button>
       </div>
     </div>
   );

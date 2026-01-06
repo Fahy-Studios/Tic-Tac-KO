@@ -9,6 +9,7 @@ import ParticleSystem from './ParticleSystem';
 import FloatingText from './FloatingText';
 import { useGameLogic } from '../hooks/useGameLogic';
 import { GameMode } from '../types';
+import { useSound } from '../hooks/useSound';
 
 interface GameProps {
   onBackToLevels: () => void;
@@ -44,7 +45,18 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
     handleUpgradeSelect
   } = useGameLogic({ gameMode, onBackToLevels });
   
+  const { playClick } = useSound();
   const expBarRef = useRef<HTMLDivElement>(null);
+
+  const handleReset = () => {
+    playClick();
+    resetGame();
+  };
+
+  const handleBack = () => {
+    playClick();
+    onBackToLevels();
+  };
 
   return (
     <div className="game-entry-wrapper">
@@ -66,8 +78,8 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
         <div className="game-header">
            <h1>Tic-Tac-KO</h1>
            <div className="header-buttons">
-            <button onClick={resetGame} className="restart-icon-button" title="Restart Game">↻</button>
-            <button onClick={onBackToLevels} className="levels-button">☰</button>
+            <button onClick={handleReset} className="restart-icon-button" title="Restart Game">↻</button>
+            <button onClick={handleBack} className="levels-button">☰</button>
            </div>
         </div>
 
@@ -171,7 +183,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
         {gameOver && (
           <GameOverModal
             winner={winner}
-            onRestart={resetGame}
+            onRestart={handleReset}
             isMultiplayer={gameMode === 'local_multiplayer'}
           />
         )}

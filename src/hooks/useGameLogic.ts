@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useGameState } from './useGameState';
+import { useSound } from './useSound';
 import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent, findBestMove } from '../utils/gameLogic';
 import { Upgrade, GameMode } from '../types';
 
@@ -39,6 +40,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
 
   const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const { playPop, playAttack, playCrit, playBlock, playPowerUp, playVictory, playDefeat } = useSound();
 
   // Game balance parameters
   const baseDamage = 15;
@@ -62,14 +64,17 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     setStatusMessage(message);
     
     if (winnerName === 'Player' || (gameMode === 'local_multiplayer' && winnerName === 'Enemy')) {
+        playVictory();
         confetti({
             particleCount: 200,
             spread: 70,
             origin: { y: 0.6 },
             colors: ['#FFD700', '#FFA500', '#FF4500', '#00FF00', '#00BFFF']
         });
+    } else {
+        playDefeat();
     }
-  }, [setGameOver, setWinner, setStatusMessage, gameMode]);
+  }, [setGameOver, setWinner, setStatusMessage, gameMode, playVictory, playDefeat]);
 
   const handleDraw = useCallback(() => {
     if (gameOver) return;
@@ -80,6 +85,8 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     setPlayerHP(newPlayerHP);
     setEnemyHP(newEnemyHP);
     triggerShake();
+    // Use crit sound as a heavy "thud" for draw damage
+    playCrit(); 
 
     const isPlayerDead = newPlayerHP <= 0;
     const isEnemyDead = newEnemyHP <= 0;
@@ -119,7 +126,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
         }
       }
     );
-  }, [gameOver, playerHP, enemyHP, drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, triggerShake, triggerGameOver, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount, gameMode, currentPlayer]);
+  }, [gameOver, playerHP, enemyHP, drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, triggerShake, triggerGameOver, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount, gameMode, currentPlayer, playCrit]);
 
   const generateUpgrades = useCallback((): Upgrade[] => {
     const allUpgrades: Upgrade[] = [
@@ -234,6 +241,9 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     if (!isAIMove && currentPlayer === 'O' && gameMode === 'singleplayer') return;
     if (isAIMove && currentPlayer === 'X') return;
 
+    // Default pop sound for move
+    playPop();
+
     const newBoard = board.map(r => [...r]);
     newBoard[row][col] = currentPlayer;
     
@@ -246,6 +256,10 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     let nextPlayerHP = playerHP;
     
     if (combo > 0) {
+      // Hit sound
+      if (combo > 1) playCrit();
+      else playAttack();
+
       damage = baseDamage * combo;
       if (combo > 1) {
         damage = Math.floor(damage * comboDamageMultiplier);
@@ -280,6 +294,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
 
     // Only Player (X) gets EXP for blocking
     if (isBlockingMove && currentPlayer === 'X') {
+      playBlock(); // Block sound
       expGained += blockEXP;
       shouldTriggerGoldEffect = true;
       if (gameMode === 'singleplayer') statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
@@ -421,6 +436,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
       setPlayerEXP(prev => prev - maxEXP);
       setAvailableUpgrades(generateUpgrades());
       setShowLevelUpAnimation(true);
+      playPowerUp(); // Level up sound
       
       confetti({
         particleCount: 150,
@@ -434,7 +450,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
         setShowUpgradeModal(true);
       }, 2000);
     }
-  }, [playerEXP, maxEXP, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, currentPlayer, generateUpgrades, gameMode]);
+  }, [playerEXP, maxEXP, showUpgradeModal, showLevelUpAnimation, consecutiveTurns, currentPlayer, generateUpgrades, gameMode, playPowerUp]);
 
   useEffect(() => {
     if (!gameOver && !showUpgradeModal && !showLevelUpAnimation && comboCount === 0) {
@@ -460,6 +476,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
 
   const handleUpgradeSelect = (upgrade: Upgrade) => {
     setShowUpgradeModal(false);
+    playPowerUp(); // Upgrade select sound
     upgrade.effect();
     if (upgrade.id === 'double_turn') {
       setStatusMessage(`${upgrade.name} activated! Extra turn available!`);
