@@ -40,6 +40,18 @@ body {
       rgba(45, 49, 66, 0.03) 2px,
       rgba(45, 49, 66, 0.03) 4px
     );
+  animation: fade-in-up 0.5s ease-out;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .game-header {
@@ -151,10 +163,22 @@ body {
 
 .heart.filled {
   color: #e74c3c;
+  animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .heart.empty {
   color: #bdc3c7;
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .exp-bar-container {
@@ -226,6 +250,8 @@ body {
   border: 3px solid #2d3142;
   min-height: max(60px, 12vmin);
   min-width: max(60px, 12vmin);
+  /* Use aspect-ratio to ensure square shape */
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
   font-size: clamp(24px, 6vw, 36px);
   font-weight: bold;
@@ -270,18 +296,69 @@ body {
 }
 
 .cell-content {
-  display: inline-block;
-  transform: rotate(var(--rotation, 0deg));
+  /* Position absolute to avoid layout shifts */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure pointer events pass through to button if needed */
+  pointer-events: none;
 }
 
-.x-mark {
-  color: #e74c3c;
-  --rotation: 5deg;
+/* Sketchy SVG Styles */
+.sketch-mark {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.o-mark {
-  color: #3498db;
-  --rotation: -3deg;
+.sketch-stroke {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  transition: stroke 0.3s ease;
+}
+
+.sketch-x .sketch-stroke {
+  stroke: #e74c3c;
+}
+
+.sketch-o .sketch-stroke {
+  stroke: #3498db;
+}
+
+/* Gold Mark Style override */
+.gold-mark .sketch-stroke {
+  stroke: #f39c12 !important;
+  filter: drop-shadow(0 0 5px rgba(243, 156, 18, 0.6));
+}
+
+/* Animation for X strokes */
+.sketch-x .stroke-1 {
+  animation: draw-stroke 0.2s ease-out forwards;
+}
+
+.sketch-x .stroke-2 {
+  animation: draw-stroke 0.2s ease-out 0.15s forwards;
+}
+
+/* Animation for O circle */
+.sketch-o .sketch-stroke {
+  animation: draw-stroke 0.4s ease-out forwards;
+}
+
+@keyframes draw-stroke {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .status-display {
@@ -299,6 +376,12 @@ body {
   box-shadow: 3px 3px 0px #2d3142;
   position: relative;
   transform: rotate(-1deg);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(-1deg); }
 }
 
 .status-bubble::after {
@@ -359,6 +442,13 @@ body {
   color: white;
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(79, 93, 117, 0.5);
+  animation: active-pulse 2s infinite;
+}
+
+@keyframes active-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 93, 117, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(79, 93, 117, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 93, 117, 0); }
 }
 
 .vs {
@@ -404,6 +494,13 @@ body {
   align-items: center;
   z-index: 1000;
   padding: 16px;
+  opacity: 0;
+  animation: fade-in 0.3s forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .upgrade-modal, .settings-modal, .how-to-play-modal, .game-over-modal {
@@ -417,6 +514,20 @@ body {
   text-align: center;
   max-height: 90vh;
   overflow-y: auto;
+  transform: scale(0.9);
+  opacity: 0;
+  animation: pop-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop-up {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .upgrade-modal h2, .settings-modal h2, .how-to-play-modal h2, .game-over-modal h2 {
@@ -443,6 +554,22 @@ body {
   transition: all 0.2s;
   text-align: left;
   box-shadow: 3px 3px 0px #2d3142;
+  animation: slide-in-right 0.4s ease-out backwards;
+}
+
+.upgrade-option:nth-child(1) { animation-delay: 0.1s; }
+.upgrade-option:nth-child(2) { animation-delay: 0.2s; }
+.upgrade-option:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .upgrade-option:hover {
@@ -540,6 +667,41 @@ body {
   font-size: clamp(18px, 4vw, 22px);
   padding: clamp(16px, 4vmin, 20px) clamp(32px, 8vmin, 40px);
   min-height: max(60px, 12vmin);
+}
+
+/* Crystal EXP Particle */
+.exp-crystal {
+  position: absolute;
+  width: 14px; /* Increased from 10px */
+  height: 14px; /* Increased from 10px */
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* Diamond shape */
+  left: var(--start-x);
+  top: var(--start-y);
+  animation: crystal-fly 1.2s ease-in-out forwards;
+  animation-delay: var(--delay);
+  opacity: 0;
+  z-index: 10000; /* Ensure on top of everything */
+}
+
+@keyframes crystal-fly {
+  /* Phase 1: Spawn & Hover/Spread randomly */
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(var(--random-x), var(--random-y)) scale(1.2) rotate(45deg);
+  }
+  40% {
+    transform: translate(var(--random-x), var(--random-y)) scale(1) rotate(90deg);
+  }
+  
+  /* Phase 2: Accelerate to target */
+  100% {
+    transform: translate(calc(var(--target-x) - var(--start-x)), calc(var(--target-y) - var(--start-y))) scale(0.5) rotate(180deg);
+    opacity: 0;
+  }
 }
 
 /* Responsive Design */
