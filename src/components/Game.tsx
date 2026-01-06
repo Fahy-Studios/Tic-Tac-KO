@@ -33,7 +33,8 @@ const Game: React.FC = () => {
     goldPiece, setGoldPiece,
     particleEvents, triggerParticles,
     floatingTexts, triggerFloatingText, handleFloatingTextComplete,
-    resetGame
+    resetGame,
+    isShaking, triggerShake
   } = useGameState();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -50,17 +51,39 @@ const Game: React.FC = () => {
   const blockEXP = 33;
   const lineCompletionBonusTurns = 1;
 
+  // Handler for Game Over Logic - now triggered via callbacks
+  const triggerGameOver = useCallback((winnerName: string) => {
+    setGameOver(true);
+    setWinner(winnerName);
+    setStatusMessage(winnerName === 'Player' ? 'Victory! Enemy defeated!' : 'Defeat! You have fallen in battle!');
+  }, [setGameOver, setWinner, setStatusMessage]);
+
   const handleDraw = useCallback(() => {
+    // Only queue draw sequence if game isn't already over
+    if (gameOver) return;
+
+    // Apply draw damage and shake
     setPlayerHP(prev => Math.max(0, prev - drawDamage));
     setEnemyHP(prev => Math.max(0, prev - drawDamage));
-    setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
-    setCurrentPlayer('X');
-    setConsecutiveTurns(0);
-    setStatusMessage(`Draw! Both players take ${drawDamage} damage. Board reset.`);
-    triggerFloatingText(`DRAW! -${drawDamage}`, 0, 0, '#ff4444');
-    setLastWinningLines([]);
-    setComboCount(0);
-  }, [drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount]);
+    triggerShake();
+
+    // Queue the DRAW text with callback to reset board
+    triggerFloatingText(
+      `DRAW! -${drawDamage}`, 
+      0, 
+      0, 
+      '#ff4444', 
+      () => {
+        // This runs AFTER the text finishes
+        setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
+        setCurrentPlayer('X');
+        setConsecutiveTurns(0);
+        setStatusMessage(`Draw! Both players take ${drawDamage} damage. Board reset.`);
+        setLastWinningLines([]);
+        setComboCount(0);
+      }
+    );
+  }, [drawDamage, triggerFloatingText, setPlayerHP, setEnemyHP, setBoard, setCurrentPlayer, setConsecutiveTurns, setStatusMessage, setLastWinningLines, setComboCount, gameOver, triggerShake]);
 
   const generateUpgrades = useCallback((): Upgrade[] => {
     const allUpgrades: Upgrade[] = [
@@ -136,14 +159,22 @@ const Game: React.FC = () => {
     const clientY = 'clientY' in event ? event.clientY : window.innerHeight / 2;
     let shouldTriggerGoldEffect = false;
 
+    // We track projected HP to determine if game ends this turn
+    let nextEnemyHP = enemyHP;
+    let nextPlayerHP = playerHP;
+
     if (combo > 0) {
       let damage = baseDamage * combo;
       if (combo > 1) {
         damage = Math.floor(damage * comboDamageMultiplier);
       }
 
+      // Trigger shake on any damage
+      triggerShake();
+
       if (currentPlayer === 'X') {
-        setEnemyHP(prev => Math.max(0, prev - damage));
+        nextEnemyHP = Math.max(0, enemyHP - damage);
+        setEnemyHP(nextEnemyHP);
         const lineExp = lineCompletionEXP * combo;
         expGained += lineExp;
         setPlayerEXP(prev => prev + expGained);
@@ -157,7 +188,8 @@ const Game: React.FC = () => {
         statusMessages.push(`${combo === 1 ? 'Line completed!' : `${combo}-line combo!`} Deal ${damage} damage!`);
         statusMessages.push(`+${lineExp} EXP! Bonus turn!`);
       } else {
-        setPlayerHP(prev => Math.max(0, prev - damage));
+        nextPlayerHP = Math.max(0, playerHP - damage);
+        setPlayerHP(nextPlayerHP);
         if (combo > 1) {
             triggerFloatingText(`ENEMY COMBO! -${damage}`, 0, 0, '#ff4444');
         } else {
@@ -176,21 +208,30 @@ const Game: React.FC = () => {
       }, 1000);
       setLastWinningLines(winningLines);
     } else {
-      if (checkForDraw(newBoard)) {
-        setTimeout(() => handleDraw(), 500);
-        return;
-      }
+      // Non-winning move logic
+      // Check for draw
+      let isDraw = checkForDraw(newBoard);
+      
+      // If NOT a draw, or if it is a draw we still handle turn logic (Draw handler is queued separately)
       if (consecutiveTurns > 0) {
         setConsecutiveTurns(prev => prev - 1);
-        if (!combo) {
+        if (!combo && !isDraw) { // Only show extra turn if not draw
           statusMessages.push(currentPlayer === 'X' ? 'Extra turn!' : 'Enemy extra turn!');
           triggerFloatingText('Extra Turn!', 0, 0, '#00ccff');
         }
-      } else {
+      } else if (!isDraw) {
+        // Only switch turns if NOT a draw
         setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
         if (isAIMove) {
           setIsEnemyThinking(false);
         }
+      }
+
+      // If it IS a draw, schedule the draw handler
+      if (isDraw) {
+         // We do NOT return here, so blocking logic below can still run
+         // The draw handler will run later due to queue
+         handleDraw(); 
       }
     }
 
@@ -200,6 +241,13 @@ const Game: React.FC = () => {
       triggerFloatingText('BLOCKED!', 0, 0, '#00ccff');
       shouldTriggerGoldEffect = true;
       statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
+    }
+
+    // Check Win/Lose Conditions and Queue them
+    if (nextEnemyHP <= 0) {
+      triggerFloatingText('VICTORY!', 0, 0, '#00ff66', () => triggerGameOver('Player'));
+    } else if (nextPlayerHP <= 0) {
+      triggerFloatingText('DEFEAT!', 0, 0, '#ff4444', () => triggerGameOver('Enemy'));
     }
 
     if (shouldTriggerGoldEffect) {
@@ -250,21 +298,6 @@ const Game: React.FC = () => {
     }
   }, [playerEXP, maxEXP, showUpgradeModal, consecutiveTurns, currentPlayer, generateUpgrades]);
 
-  // Check win/lose
-  useEffect(() => {
-    if (enemyHP <= 0) {
-      setGameOver(true);
-      setWinner('Player');
-      setStatusMessage('Victory! Enemy defeated!');
-      triggerFloatingText('VICTORY!', 0, 0, '#00ff66');
-    } else if (playerHP <= 0) {
-      setGameOver(true);
-      setWinner('Enemy');
-      setStatusMessage('Defeat! You have fallen in battle!');
-      triggerFloatingText('DEFEAT!', 0, 0, '#ff4444');
-    }
-  }, [enemyHP, playerHP, triggerFloatingText, setGameOver, setWinner, setStatusMessage]);
-
   // Update status message
   useEffect(() => {
     if (!gameOver && !showUpgradeModal && comboCount === 0 && !statusMessage.includes('Draw!') && !statusMessage.includes('damage') && !statusMessage.includes('Upgraded:') && !statusMessage.includes('Extra turn') && !statusMessage.includes('Blocked')) {
@@ -287,7 +320,7 @@ const Game: React.FC = () => {
   };
 
   return (
-    <div className="game-container">
+    <div className={`game-container ${isShaking ? 'shake' : ''}`}>
       <ParticleSystem events={particleEvents} targetRef={expBarRef} />
       {floatingTexts.map(ft => (
         <FloatingText

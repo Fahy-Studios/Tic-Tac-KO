@@ -21,4 +21,5 @@ export interface FloatingTextItem {
   x: number;
   y: number;
   color?: string;
+  onCompleteCallback?: () => void;
 }

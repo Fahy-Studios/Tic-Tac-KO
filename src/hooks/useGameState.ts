@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { WinningLines, Upgrade, ParticleEvent, FloatingTextItem } from '../types';
 import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent } from '../utils/gameLogic';
 
@@ -25,8 +25,18 @@ export const useGameState = () => {
   const [particleEvents, setParticleEvents] = useState<ParticleEvent[]>([]);
   const nextParticleId = useRef(0);
 
-  const [floatingTexts, setFloatingTexts] = useState<FloatingTextItem[]>([]);
+  // Queue system for floating texts
+  const [textQueue, setTextQueue] = useState<FloatingTextItem[]>([]);
+  const [activeText, setActiveText] = useState<FloatingTextItem | null>(null);
   const nextFloatingTextId = useRef(0);
+
+  // Screen shake state
+  const [isShaking, setIsShaking] = useState(false);
+
+  const triggerShake = useCallback(() => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500); // 500ms matches CSS animation
+  }, []);
 
   const triggerParticles = (startX: number, startY: number, color: string) => {
     setParticleEvents(prev => [...prev, {
@@ -37,21 +47,38 @@ export const useGameState = () => {
     }]);
   };
 
-  const triggerFloatingText = useCallback((text: string, _x: number, _y: number, color?: string) => {
+  const triggerFloatingText = useCallback((text: string, _x: number, _y: number, color?: string, onCompleteCallback?: () => void) => {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
-    setFloatingTexts(prev => [...prev, {
+    const newItem: FloatingTextItem = {
       id: nextFloatingTextId.current++,
       text,
       x: centerX,
       y: centerY,
-      color
-    }]);
+      color,
+      onCompleteCallback
+    };
+    
+    setTextQueue(prev => [...prev, newItem]);
   }, []);
 
+  // Process text queue
+  useEffect(() => {
+    if (!activeText && textQueue.length > 0) {
+      const next = textQueue[0];
+      setActiveText(next);
+      setTextQueue(prev => prev.slice(1));
+    }
+  }, [activeText, textQueue]);
+
   const handleFloatingTextComplete = (id: number) => {
-    setFloatingTexts(prev => prev.filter(ft => ft.id !== id));
+    if (activeText?.id === id) {
+      if (activeText.onCompleteCallback) {
+        activeText.onCompleteCallback();
+      }
+      setActiveText(null);
+    }
   };
 
   const resetGame = () => {
@@ -70,7 +97,9 @@ export const useGameState = () => {
     setIsEnemyThinking(false);
     setParticleEvents([]);
     setGoldPiece(null);
-    setFloatingTexts([]);
+    setTextQueue([]);
+    setActiveText(null);
+    setIsShaking(false);
   };
 
   return {
@@ -91,7 +120,11 @@ export const useGameState = () => {
     isEnemyThinking, setIsEnemyThinking,
     goldPiece, setGoldPiece,
     particleEvents, triggerParticles,
-    floatingTexts, triggerFloatingText, handleFloatingTextComplete,
-    resetGame
+    // Map activeText to array for compatibility with Game.tsx rendering map
+    floatingTexts: activeText ? [activeText] : [],
+    triggerFloatingText, 
+    handleFloatingTextComplete,
+    resetGame,
+    isShaking, triggerShake
   };
 };
