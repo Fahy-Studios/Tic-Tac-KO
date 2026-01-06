@@ -488,7 +488,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  /* Removed background to show body pattern */
   gap: 40px;
 }
 
@@ -500,10 +500,10 @@
 }
 
 .game-logo {
-  max-width: 80%;
-  width: 300px; /* Reduced width */
+  max-width: 85%;
+  width: 420px; /* Increased from 300px by 40% */
   height: auto;
-  max-height: 30vh; /* Reduced height constraint */
+  max-height: 42vh; /* Increased from 30vh by 40% */
   margin-bottom: 20px;
   filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.2));
   transform: rotate(-3deg);
