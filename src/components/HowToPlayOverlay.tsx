@@ -8,7 +8,7 @@ const HowToPlayOverlay: React.FC<HowToPlayOverlayProps> = ({ onClose }) => {
   return (
     <div className="modal-overlay">
       <div className="how-to-play-modal">
-        <h2>How to Play Tic-Tac-Battle</h2>
+        <h2>How to Play Tic-Tac-KO</h2>
         <div className="tutorial-content">
           <div className="tutorial-section">
             <h3>🎯 Objective</h3>

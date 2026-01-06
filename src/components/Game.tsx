@@ -302,7 +302,7 @@ const Game: React.FC = () => {
       ))}
       
       <div className="game-header">
-        <h1>Tic-Tac-Battle</h1>
+        <h1>Tic-Tac-KO</h1>
         <div className="header-buttons">
           <button onClick={() => setShowHowToPlay(true)} className="help-button">?</button>
           <button onClick={() => setShowSettings(true)} className="settings-button">⚙</button>
