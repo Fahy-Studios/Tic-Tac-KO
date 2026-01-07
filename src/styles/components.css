@@ -612,7 +612,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px; /* Reduced margin */
   animation: fade-in-up 0.5s ease-out;
 }
 
@@ -623,23 +623,25 @@
 
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Thinner cards (min 130px) */
+  gap: 15px; /* Tighter gap */
 }
 
 .level-card {
   background: white;
   border: 3px solid #2d3142;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px; /* Slightly tighter radius */
+  padding: 15px; /* Reduced padding */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 5px; /* Tighter gap */
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 4px 4px 0px #2d3142;
   animation: fade-in-up 0.5s ease-out backwards;
+  min-height: 120px; /* Consistent height */
+  justify-content: space-between; /* Space out content */
 }
 
 .level-card:hover:not(.locked) {
@@ -661,7 +663,7 @@
 .level-card:nth-child(4) { animation-delay: 0.4s; }
 
 .level-number {
-  font-size: 2rem;
+  font-size: 1.5rem; /* Smaller number */
   font-weight: 900;
   color: #2d3142;
 }
@@ -670,6 +672,8 @@
   font-weight: bold;
   text-align: center;
   color: #4f5d75;
+  font-size: 0.9rem; /* Smaller text */
+  line-height: 1.2;
 }
 
 /* Levels Button in Game Header */

@@ -6,6 +6,9 @@ export const useGameState = () => {
     Array(3).fill(null).map(() => Array(3).fill(''))
   );
   
+  // Level State
+  const [currentLevelId, setCurrentLevelId] = useState(1);
+
   // HP & Stats
   const [maxPlayerHP, setMaxPlayerHP] = useState(100);
   const [maxEnemyHP, setMaxEnemyHP] = useState(100);
@@ -97,14 +100,11 @@ export const useGameState = () => {
 
   const resetGame = () => {
     setBoard(Array(3).fill(null).map(() => Array(3).fill('')));
-    setMaxPlayerHP(100);
-    setMaxEnemyHP(100);
-    setPlayerHP(100);
-    setEnemyHP(100);
+    setPlayerHP(maxPlayerHP);
+    setEnemyHP(maxEnemyHP);
     setNextTurnDamageBonus(0);
     setNextTurnDamageReduction(0);
     setCurrentPlayer('X');
-    setPlayerEXP(0);
     setGameOver(false);
     setWinner(null);
     setLastWinningLines([]);
@@ -122,6 +122,7 @@ export const useGameState = () => {
 
   return {
     board, setBoard,
+    currentLevelId, setCurrentLevelId,
     playerHP, setPlayerHP,
     enemyHP, setEnemyHP,
     maxPlayerHP, setMaxPlayerHP,

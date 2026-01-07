@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSound } from '../hooks/useSound';
+import { LEVELS } from '../data/levels';
 
 interface LevelsPageProps {
   onLevelSelect: (level: number) => void;
@@ -16,24 +17,22 @@ const LevelsPage: React.FC<LevelsPageProps> = ({ onLevelSelect, onBack }) => {
       </div>
       
       <div className="levels-grid">
-        <button 
-            className="level-card" 
-            onClick={() => {
-                playClick();
-                onLevelSelect(1);
-            }}
-        >
-            <div className="level-number">1</div>
-            <div className="level-name">The Beginning</div>
-        </button>
-        <button className="level-card locked" disabled>
-            <div className="level-number">2</div>
-            <div className="level-name">Locked</div>
-        </button>
-         <button className="level-card locked" disabled>
-            <div className="level-number">3</div>
-            <div className="level-name">Locked</div>
-        </button>
+        {LEVELS.map((level) => (
+            <button 
+                key={level.id}
+                className={`level-card ${level.backgroundClass}-preview`} // Add preview class if we want specific styling per card
+                onClick={() => {
+                    playClick();
+                    onLevelSelect(level.id);
+                }}
+            >
+                <div className="level-number">{level.id}</div>
+                <div className="level-name">{level.name}</div>
+                <div className="level-desc" style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '5px' }}>
+                    {level.aiDifficulty.toUpperCase()}
+                </div>
+            </button>
+        ))}
       </div>
 
       <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>

@@ -14,14 +14,16 @@ import { useSound } from '../hooks/useSound';
 interface GameProps {
   onBackToLevels: () => void;
   gameMode?: GameMode;
+  initialLevelId?: number;
 }
 
-const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }) => {
+const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer', initialLevelId }) => {
   const {
     board,
     playerHP,
     enemyHP,
     maxPlayerHP,
+    maxEnemyHP,
     nextTurnDamageBonus,
     nextTurnDamageReduction,
     currentPlayer,
@@ -42,8 +44,9 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
     showLevelUpAnimation,
     isClearing,
     handleCellClick,
-    handleUpgradeSelect
-  } = useGameLogic({ gameMode, onBackToLevels });
+    handleUpgradeSelect,
+    currentLevelConfig
+  } = useGameLogic({ gameMode, onBackToLevels, initialLevelId });
   
   const { playClick } = useSound();
   const expBarRef = useRef<HTMLDivElement>(null);
@@ -60,7 +63,9 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
 
   return (
     <div className="game-entry-wrapper">
-      <div className={`game-container ${isShaking ? 'shake' : ''} ${gameMode === 'local_multiplayer' ? 'local-multiplayer' : ''}`}>
+      <div 
+        className={`game-container ${isShaking ? 'shake' : ''} ${gameMode === 'local_multiplayer' ? 'local-multiplayer' : ''} ${gameMode === 'singleplayer' ? currentLevelConfig.backgroundClass : ''}`}
+      >
         <ParticleSystem events={particleEvents} targetRef={expBarRef} />
         {floatingTexts.map(ft => (
           <FloatingText
@@ -76,7 +81,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
         
         {/* Header */}
         <div className="game-header">
-           <h1>Tic-Tac-KO</h1>
+           <h1>{gameMode === 'singleplayer' ? `${currentLevelConfig.name}` : 'Tic-Tac-KO'}</h1>
            <div className="header-buttons">
             <button onClick={handleReset} className="restart-icon-button" title="Restart Game">↻</button>
             <button onClick={handleBack} className="levels-button">☰</button>
@@ -134,7 +139,7 @@ const Game: React.FC<GameProps> = ({ onBackToLevels, gameMode = 'singleplayer' }
                   <HPBar 
                       label="Enemy" 
                       hp={enemyHP} 
-                      maxHP={100} 
+                      maxHP={maxEnemyHP} 
                       isPlayer={false}
                   />
               </div>

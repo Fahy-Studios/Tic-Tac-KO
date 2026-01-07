@@ -1,22 +1,27 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { useGameState } from './useGameState';
 import { useSound } from './useSound';
-import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent, findBestMove } from '../utils/gameLogic';
+import { checkWinningLines, clearWinningLines, checkForDraw, checkIfMoveBlocksOpponent } from '../utils/gameLogic';
+import { findBestMove, getEraserMove } from '../utils/aiLogic';
 import { Upgrade, GameMode } from '../types';
+import { LEVELS } from '../data/levels';
 
 interface UseGameLogicProps {
   gameMode: GameMode;
   onBackToLevels: () => void;
+  initialLevelId?: number;
 }
 
-export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) => {
+export const useGameLogic = ({ gameMode, onBackToLevels, initialLevelId = 1 }: UseGameLogicProps) => {
   const gameState = useGameState();
   const {
     board, setBoard,
+    currentLevelId, setCurrentLevelId,
     playerHP, setPlayerHP,
     enemyHP, setEnemyHP,
     maxPlayerHP, setMaxPlayerHP,
+    maxEnemyHP, setMaxEnemyHP,
     nextTurnDamageBonus, setNextTurnDamageBonus,
     nextTurnDamageReduction, setNextTurnDamageReduction,
     currentPlayer, setCurrentPlayer,
@@ -34,7 +39,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     setGoldPiece,
     triggerParticles,
     triggerFloatingText,
-    resetGame,
+    resetGame: resetGameState,
     triggerShake
   } = gameState;
 
@@ -42,7 +47,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
   const [isClearing, setIsClearing] = useState(false);
   const { playPop, playAttack, playCrit, playBlock, playPowerUp, playVictory, playDefeat } = useSound();
 
-  // Game balance parameters
   const baseDamage = 15;
   const comboDamageMultiplier = 1.5;
   const drawDamage = 10;
@@ -50,7 +54,20 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
   const blockEXP = 33;
   const lineCompletionBonusTurns = 1;
 
-  // Handler for Game Over Logic
+  useEffect(() => {
+    if (gameMode === 'singleplayer') {
+        const levelConfig = LEVELS.find(l => l.id === (initialLevelId || currentLevelId)) || LEVELS[0];
+        if (maxEnemyHP !== levelConfig.enemyHP) {
+             setMaxEnemyHP(levelConfig.enemyHP);
+             setEnemyHP(levelConfig.enemyHP);
+             setCurrentLevelId(levelConfig.id);
+        }
+    } else {
+        setMaxEnemyHP(100);
+        setEnemyHP(100);
+    }
+  }, [initialLevelId, gameMode, setMaxEnemyHP, setEnemyHP, setCurrentLevelId, maxEnemyHP, currentLevelId]);
+
   const triggerGameOver = useCallback((winnerName: string) => {
     setGameOver(true);
     setWinner(winnerName);
@@ -59,7 +76,12 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     if (gameMode === 'local_multiplayer') {
         message = winnerName === 'Player' ? 'Player 1 Wins!' : 'Player 2 Wins!';
     } else {
-        message = winnerName === 'Player' ? 'Victory! Enemy defeated!' : 'Defeat! You have fallen in battle!';
+        if (winnerName === 'Player') {
+            const levelConfig = LEVELS.find(l => l.id === currentLevelId);
+            message = `Victory! Level ${levelConfig?.id} Cleared!`;
+        } else {
+            message = 'Defeat! You have fallen in battle!';
+        }
     }
     setStatusMessage(message);
     
@@ -74,7 +96,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     } else {
         playDefeat();
     }
-  }, [setGameOver, setWinner, setStatusMessage, gameMode, playVictory, playDefeat]);
+  }, [setGameOver, setWinner, setStatusMessage, gameMode, playVictory, playDefeat, currentLevelId]);
 
   const handleDraw = useCallback(() => {
     if (gameOver) return;
@@ -85,7 +107,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     setPlayerHP(newPlayerHP);
     setEnemyHP(newEnemyHP);
     triggerShake();
-    // Use crit sound as a heavy "thud" for draw damage
     playCrit(); 
 
     const isPlayerDead = newPlayerHP <= 0;
@@ -120,8 +141,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
                 setStatusMessage(`Draw! Both players take ${drawDamage} damage. Board reset.`);
                 setLastWinningLines([]);
                 setComboCount(0);
-                
-                // Buffs are NOT cleared here as per instruction
             }, 500);
         }
       }
@@ -241,7 +260,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     if (!isAIMove && currentPlayer === 'O' && gameMode === 'singleplayer') return;
     if (isAIMove && currentPlayer === 'X') return;
 
-    // Default pop sound for move
     playPop();
 
     const newBoard = board.map(r => [...r]);
@@ -256,7 +274,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     let nextPlayerHP = playerHP;
     
     if (combo > 0) {
-      // Hit sound
       if (combo > 1) playCrit();
       else playAttack();
 
@@ -292,9 +309,8 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     let statusMessages: string[] = [];
     let shouldTriggerGoldEffect = false;
 
-    // Only Player (X) gets EXP for blocking
     if (isBlockingMove && currentPlayer === 'X') {
-      playBlock(); // Block sound
+      playBlock();
       expGained += blockEXP;
       shouldTriggerGoldEffect = true;
       if (gameMode === 'singleplayer') statusMessages.push(`Blocked enemy line! +${blockEXP} EXP`);
@@ -304,7 +320,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     if (combo > 0) {
         const attackerName = currentPlayer === 'X' ? (gameMode === 'local_multiplayer' ? 'Player 1' : 'You') : (gameMode === 'local_multiplayer' ? 'Player 2' : 'Enemy');
         
-        // Only Player (X) gets EXP for lines
         if (currentPlayer === 'X') {
             const lineExp = lineCompletionEXP * combo;
             expGained += lineExp;
@@ -350,7 +365,6 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
         }
     }
     
-    // Final check to ensure only the player gets EXP
     if (expGained > 0 && gameMode === 'singleplayer' && currentPlayer === 'X') {
         setPlayerEXP(prev => prev + expGained);
     }
@@ -406,7 +420,28 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
   };
 
   const makeEnemyMove = useCallback(() => {
-    const move = findBestMove(board);
+    const levelConfig = LEVELS.find(l => l.id === currentLevelId) || LEVELS[0];
+    
+    if (levelConfig.aiAbility === 'erase') {
+        const eraserTarget = getEraserMove(board);
+        if (eraserTarget) {
+            const [r, c] = eraserTarget;
+            const newBoard = board.map(row => [...row]);
+            newBoard[r][c] = '';
+            setBoard(newBoard);
+            
+            triggerFloatingText('ERASED!', 0, 0, '#ff4444');
+            triggerShake();
+            playAttack(); 
+            setStatusMessage("The Enemy erased your mark!");
+            
+            setCurrentPlayer('X');
+            setIsEnemyThinking(false);
+            return;
+        }
+    }
+
+    const move = findBestMove(board, levelConfig.aiDifficulty);
     if (move) {
       const rect = document.querySelector('.tic-tac-toe-board')?.getBoundingClientRect();
       let clientX = window.innerWidth / 2;
@@ -419,7 +454,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
       }
       handleCellClick(move[0], move[1], { clientX, clientY }, true);
     }
-  }, [board, handleCellClick]);
+  }, [board, handleCellClick, currentLevelId, triggerFloatingText, triggerShake, playAttack, setBoard, setCurrentPlayer, setIsEnemyThinking]);
 
   useEffect(() => {
     if (gameMode === 'singleplayer' && currentPlayer === 'O' && !gameOver && !showUpgradeModal && !showLevelUpAnimation && !isClearing) {
@@ -436,7 +471,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
       setPlayerEXP(prev => prev - maxEXP);
       setAvailableUpgrades(generateUpgrades());
       setShowLevelUpAnimation(true);
-      playPowerUp(); // Level up sound
+      playPowerUp(); 
       
       confetti({
         particleCount: 150,
@@ -458,7 +493,8 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
                                 statusMessage.includes('damage') || 
                                 statusMessage.includes('Upgraded:') || 
                                 statusMessage.includes('Extra turn') || 
-                                statusMessage.includes('Blocked');
+                                statusMessage.includes('Blocked') ||
+                                statusMessage.includes('erased');
                                 
        if (!isSpecialMessage) {
           if (currentPlayer === 'X') {
@@ -476,7 +512,7 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
 
   const handleUpgradeSelect = (upgrade: Upgrade) => {
     setShowUpgradeModal(false);
-    playPowerUp(); // Upgrade select sound
+    playPowerUp(); 
     upgrade.effect();
     if (upgrade.id === 'double_turn') {
       setStatusMessage(`${upgrade.name} activated! Extra turn available!`);
@@ -485,11 +521,23 @@ export const useGameLogic = ({ gameMode, onBackToLevels }: UseGameLogicProps) =>
     }
   };
 
+  const handleReset = useCallback(() => {
+      resetGameState();
+      if (gameMode === 'singleplayer') {
+          const levelConfig = LEVELS.find(l => l.id === (initialLevelId || currentLevelId)) || LEVELS[0];
+          setEnemyHP(levelConfig.enemyHP);
+          setMaxEnemyHP(levelConfig.enemyHP);
+      }
+  }, [resetGameState, gameMode, initialLevelId, currentLevelId, setEnemyHP, setMaxEnemyHP]);
+
+
   return {
     ...gameState,
+    resetGame: handleReset,
     showLevelUpAnimation,
     isClearing,
     handleCellClick,
-    handleUpgradeSelect
+    handleUpgradeSelect,
+    currentLevelConfig: LEVELS.find(l => l.id === currentLevelId) || LEVELS[0]
   };
 };

@@ -58,6 +58,7 @@ function App() {
         <Game 
             gameMode={gameMode}
             onBackToLevels={handleBackToLevels}
+            initialLevelId={currentLevel}
         />
       )}
     </div>
