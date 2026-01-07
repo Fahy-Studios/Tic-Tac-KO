@@ -1,5 +1,6 @@
 import React from 'react';
 import logo from '../assets/logo.png';
+import fahyLogo from '../assets/Fahy.png';
 import { useSound } from '../hooks/useSound';
 
 interface StartScreenProps {
@@ -63,6 +64,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onLocalMultiplayer }
             LOCAL MULTIPLAYER
         </button>
       </div>
+      <img 
+        src={fahyLogo} 
+        alt="Fahy Studios" 
+        className="fahy-logo"
+      />
     </div>
   );
 };

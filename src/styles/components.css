@@ -525,6 +525,7 @@
   height: 100vh;
   /* Removed background to show body pattern */
   gap: 40px;
+  padding-bottom: 80px; /* Push content upwards */
 }
 
 .game-title {
@@ -549,6 +550,18 @@
 
 .game-logo:hover {
     transform: rotate(0deg) scale(1.05);
+}
+
+.fahy-logo {
+    position: absolute;
+    bottom: 20px;
+    width: 120px;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.fahy-logo:hover {
+    opacity: 1;
 }
 
 .start-buttons {
